@@ -19,10 +19,13 @@ variable "address_space" {
 }
 
 variable "subnets" {
-  description = "Lista de subnets con configuración opcional de delegación"
+  description = "Lista de subnets con configuración opcional de delegación, service endpoints y route table"
   type = list(object({
-    name           = string
-    address_prefix = string
+    name                                      = string
+    address_prefix                            = string
+    service_endpoints                         = optional(list(string), [])
+    private_endpoint_network_policies_enabled = optional(bool, true)
+    route_table_id                            = optional(string)
     delegation = optional(object({
       name = string
       service_delegation = object({
