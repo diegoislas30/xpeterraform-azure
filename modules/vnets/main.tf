@@ -14,6 +14,9 @@ resource "azurerm_subnet" "this" {
   virtual_network_name = azurerm_virtual_network.this.name
   address_prefixes     = [each.value.address_prefix]
 
+  service_endpoints                         = each.value.service_endpoints
+  private_endpoint_network_policies_enabled = each.value.private_endpoint_network_policies_enabled
+
   dynamic "delegation" {
     for_each = lookup(each.value, "delegation", null) != null ? [each.value.delegation] : []
     content {
@@ -24,6 +27,17 @@ resource "azurerm_subnet" "this" {
       }
     }
   }
+}
+
+# Asociación de Route Tables a Subnets
+resource "azurerm_subnet_route_table_association" "this" {
+  for_each = {
+    for s in var.subnets : s.name => s
+    if s.route_table_id != null
+  }
+
+  subnet_id      = azurerm_subnet.this[each.key].id
+  route_table_id = each.value.route_table_id
 }
 
 # Local peering (esta VNet → remota)
