@@ -113,7 +113,7 @@ module "acr" {
   source = "./modules/acr"
   resource_group_name = module.rg-container-portalcostos-prd.resource_group_name
   location            = module.rg-container-portalcostos-prd.resource_group_location
-  acr_name            = "arc_test"
+  acr_name            = "arctest"
   sku                 = "Standard"
   admin_enabled       = true
 
