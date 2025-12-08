@@ -109,8 +109,9 @@ module "rg-container-portalcostos-prd" {
   }
 }
 
-module "container-portalcostos-prd" {
-  source = "./modules/arc"
+module "container-registry-portalcostos-prd" {
+  source = "./modules/container_registry"
+  container_registry_name = "container-registry-portalcostos-prd"
   resource_group_name = module.rg-container-portalcostos-prd.resource_group_name
   location = module.rg-container-portalcostos-prd.resource_group_location
   tags = {
@@ -125,3 +126,4 @@ module "container-portalcostos-prd" {
     azurerm = azurerm.xpe_shared_poc
   }
 }
+
