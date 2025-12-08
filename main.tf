@@ -109,21 +109,21 @@ module "rg-container-portalcostos-prd" {
   }
 }
 
-module "container-registry-portalcostos-prd" {
-  source = "./modules/container_registry"
-  container_registry_name = "container-registry-portalcostos-prd"
+module "acr" {
+  source = "./modules/acr"
   resource_group_name = module.rg-container-portalcostos-prd.resource_group_name
-  location = module.rg-container-portalcostos-prd.resource_group_location
+  location            = module.rg-container-portalcostos-prd.resource_group_location
+  acr_name            = "mycompanyacr001"
+  sku                 = "Standard"
+  admin_enabled       = true
+
   tags = {
-    UDN = "Xpertal"
-    OWNER = "Diego Enrique Islas Cuervo"
+    UDN      = "Xpertal"
+    OWNER    = "Diego Enrique Islas Cuervo"
     xpeowner = "diegoenrique.islas@xpertal.com"
     proyecto = "Portal de Costos"
-    ambiente = "Productivo"
-  }
-
-  providers = {
-    azurerm = azurerm.xpe_shared_poc
+    ambiente = "dev"
   }
 }
+
 
