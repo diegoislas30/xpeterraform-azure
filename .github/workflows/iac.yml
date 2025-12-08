@@ -48,18 +48,64 @@ jobs:
 
       - name: Terraform Plan
         run: |
-          terraform plan -input=false \
+          terraform plan -input=false -out=tfplan \
             -var="resource_group_name=mi-grupo" \
             -var="location=eastus"
 
-      - name: Publicar plan (opcional)
+      - name: Generar resumen de recursos
         if: success()
-        run: echo "Plan exitoso"
-        # Si deseas guardar un tfplan, descomenta esto:
-        # uses: actions/upload-artifact@v4
-        # with:
-        #   name: tfplan
-        #   path: tfplan
+        run: |
+          # Convertir plan a JSON
+          terraform show -json tfplan > tfplan.json
+
+          # Extraer resumen de cambios
+          echo "## 📋 Resumen de Recursos a Deployar" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Contar recursos por acción
+          CREATES=$(jq -r '[.resource_changes[]? | select(.change.actions[] == "create")] | length' tfplan.json)
+          UPDATES=$(jq -r '[.resource_changes[]? | select(.change.actions[] == "update")] | length' tfplan.json)
+          DELETES=$(jq -r '[.resource_changes[]? | select(.change.actions[] == "delete")] | length' tfplan.json)
+
+          echo "### Estadísticas de Cambios" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ **Recursos a crear:** $CREATES" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔄 **Recursos a modificar:** $UPDATES" >> $GITHUB_STEP_SUMMARY
+          echo "- ❌ **Recursos a eliminar:** $DELETES" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Listar recursos a crear
+          if [ "$CREATES" -gt 0 ]; then
+            echo "### ✅ Recursos a Crear" >> $GITHUB_STEP_SUMMARY
+            jq -r '.resource_changes[]? | select(.change.actions[] == "create") | "- `\(.type).\(.name)` (\(.address))"' tfplan.json >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # Listar recursos a modificar
+          if [ "$UPDATES" -gt 0 ]; then
+            echo "### 🔄 Recursos a Modificar" >> $GITHUB_STEP_SUMMARY
+            jq -r '.resource_changes[]? | select(.change.actions[] == "update") | "- `\(.type).\(.name)` (\(.address))"' tfplan.json >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # Listar recursos a eliminar
+          if [ "$DELETES" -gt 0 ]; then
+            echo "### ❌ Recursos a Eliminar" >> $GITHUB_STEP_SUMMARY
+            jq -r '.resource_changes[]? | select(.change.actions[] == "delete") | "- `\(.type).\(.name)` (\(.address))"' tfplan.json >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # Guardar resumen para el job de apply
+          cat $GITHUB_STEP_SUMMARY > plan-summary.md
+
+      - name: Publicar plan como artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan
+          path: |
+            tfplan
+            plan-summary.md
+          retention-days: 5
 
   apply:
     name: Terraform Apply (requires approval)
@@ -71,6 +117,21 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Descargar plan
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan
+
+      - name: Mostrar resumen de recursos a aplicar
+        run: |
+          echo "## 📋 Resumen de Recursos a Aplicar" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Se aplicarán los siguientes cambios en el ambiente de **producción**:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f plan-summary.md ]; then
+            cat plan-summary.md >> $GITHUB_STEP_SUMMARY
+          fi
 
       - name: Azure Login (no subscription)
         uses: azure/login@v2
@@ -93,4 +154,4 @@ jobs:
             -backend-config="key=${{ github.ref_name }}.tfstate"
 
       - name: Terraform Apply
-        run: terraform apply -input=false -auto-approve
+        run: terraform apply -input=false -auto-approve tfplan
