@@ -4,7 +4,36 @@ Esta carpeta contiene ejemplos prácticos de cómo usar los módulos de Azure Co
 
 ## 📁 Ejemplos Disponibles
 
-### 1. [Container Instance Básico](./container_instance_basic/)
+### 1. [Desplegar Imagen Local](./deploy_local_image/) ⭐ NUEVO
+
+**Nivel**: Principiante 🟢
+
+Despliega tu propia imagen Docker local a Azure.
+
+**Caso de uso real:**
+- Ya tienes una app corriendo en Docker localmente
+- Quieres moverla a la nube sin cambios
+- Incluye script automatizado de deployment
+
+**Aprenderás:**
+- Subir imagen local a Azure Container Registry
+- Desplegar desde ACR a Container Instances
+- Automatizar con script bash
+- Actualizar tu app en producción
+
+**Tiempo**: ~10 minutos (con script automatizado)
+
+```bash
+cd deploy_local_image
+chmod +x deploy.sh
+./deploy.sh full
+```
+
+**Ver**: [Quick Start Guide](./deploy_local_image/QUICKSTART.md)
+
+---
+
+### 2. [Container Instance Básico](./container_instance_basic/)
 
 **Nivel**: Principiante 🟢
 
@@ -25,7 +54,7 @@ terraform init && terraform apply
 
 ---
 
-### 2. [ACR + Container Instance](./acr_with_container_instance/)
+### 3. [ACR + Container Instance](./acr_with_container_instance/)
 
 **Nivel**: Intermedio 🟡
 
@@ -56,7 +85,7 @@ az acr import \
 
 ---
 
-### 3. [Múltiples Contenedores - Sidecar Pattern](./container_instance_advanced/)
+### 4. [Múltiples Contenedores - Sidecar Pattern](./container_instance_advanced/)
 
 **Nivel**: Avanzado 🔴
 
@@ -85,7 +114,7 @@ terraform init && terraform apply
 
 ---
 
-### 4. [Volúmenes Persistentes](./container_instance_with_volumes/)
+### 5. [Volúmenes Persistentes](./container_instance_with_volumes/)
 
 **Nivel**: Intermedio 🟡
 
@@ -151,6 +180,7 @@ terraform destroy
 
 | Ejemplo | Complejidad | Tiempo | Costo/mes | Casos de Uso |
 |---------|-------------|--------|-----------|--------------|
+| **Imagen Local** ⭐ | 🟢 Fácil | 10 min | ~$105 | Tu app local → Azure |
 | **Básico** | 🟢 Fácil | 5 min | ~$32 | Aprender ACI, demos rápidas |
 | **ACR + ACI** | 🟡 Medio | 10 min | ~$37 | Imágenes privadas, producción |
 | **Múltiples** | 🔴 Avanzado | 10 min | ~$54 | Microservicios, sidecars |
@@ -177,6 +207,9 @@ terraform destroy
 ```
 
 ## 💡 Escenarios por Caso de Uso
+
+### Ya tengo una app corriendo en Docker localmente ⭐
+→ Usa **Desplegar Imagen Local**
 
 ### Quiero desplegar una app simple
 → Usa **Container Instance Básico**
