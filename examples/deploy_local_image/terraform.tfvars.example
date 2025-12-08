@@ -1,0 +1,15 @@
+# Configuración para Portal Costos Cloud
+# Copia este archivo a terraform.tfvars y personalízalo
+
+# Nombre de tu aplicación (usado en recursos de Azure)
+app_name = "portal-costos"
+
+# Ambiente: dev, staging, prod
+environment = "dev"
+
+# Región de Azure
+# Opciones comunes: eastus, westus, eastus2, westeurope, etc.
+location = "eastus"
+
+# Nota: Los tags se configuran automáticamente en main.tf
+# Si necesitas personalizarlos, edita main.tf directamente
