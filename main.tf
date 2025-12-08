@@ -113,7 +113,7 @@ module "acr" {
   source = "./modules/acr"
   resource_group_name = module.rg-container-portalcostos-prd.resource_group_name
   location            = module.rg-container-portalcostos-prd.resource_group_location
-  acr_name            = "arctest"
+  acr_name            = "xpeportalcostov1"
   sku                 = "Standard"
   admin_enabled       = true
 
