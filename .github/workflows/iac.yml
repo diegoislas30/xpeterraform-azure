@@ -75,9 +75,10 @@ jobs:
           if [ "$CREATES" -gt 0 ]; then
             echo "### ✅ Recursos a Crear" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "| Tipo | Nombre | Dirección |" >> $GITHUB_STEP_SUMMARY
-            echo "|------|--------|-----------|" >> $GITHUB_STEP_SUMMARY
-            jq -r '.resource_changes[]? | select(.change.actions[] == "create") | "| \(.type) | \(.name) | \(.address) |"' tfplan.json >> $GITHUB_STEP_SUMMARY
+            echo "| Tipo | Nombre en Azure | Nombre Terraform | Dirección |" >> $GITHUB_STEP_SUMMARY
+            echo "|------|-----------------|------------------|-----------|" >> $GITHUB_STEP_SUMMARY
+            jq -r '.resource_changes[]? | select(.change.actions[] == "create") |
+              "| \(.type) | \(.change.after.name // .change.after.resource_group_name // .change.after.vnet_name // "N/A") | \(.name) | \(.address) |"' tfplan.json >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
           fi
 
@@ -85,9 +86,10 @@ jobs:
           if [ "$UPDATES" -gt 0 ]; then
             echo "### 🔄 Recursos a Modificar" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "| Tipo | Nombre | Dirección |" >> $GITHUB_STEP_SUMMARY
-            echo "|------|--------|-----------|" >> $GITHUB_STEP_SUMMARY
-            jq -r '.resource_changes[]? | select(.change.actions[] == "update") | "| \(.type) | \(.name) | \(.address) |"' tfplan.json >> $GITHUB_STEP_SUMMARY
+            echo "| Tipo | Nombre en Azure | Nombre Terraform | Dirección |" >> $GITHUB_STEP_SUMMARY
+            echo "|------|-----------------|------------------|-----------|" >> $GITHUB_STEP_SUMMARY
+            jq -r '.resource_changes[]? | select(.change.actions[] == "update") |
+              "| \(.type) | \(.change.after.name // .change.after.resource_group_name // .change.after.vnet_name // "N/A") | \(.name) | \(.address) |"' tfplan.json >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
           fi
 
