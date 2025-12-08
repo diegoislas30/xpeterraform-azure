@@ -113,7 +113,7 @@ module "acr" {
   source = "./modules/acr"
   resource_group_name = module.rg-container-portalcostos-prd.resource_group_name
   location            = module.rg-container-portalcostos-prd.resource_group_location
-  acr_name            = "mycompanyacr001"
+  acr_name            = "arc_test"
   sku                 = "Standard"
   admin_enabled       = true
 
@@ -123,6 +123,9 @@ module "acr" {
     xpeowner = "diegoenrique.islas@xpertal.com"
     proyecto = "Portal de Costos"
     ambiente = "dev"
+  }
+  providers = {
+    azurerm = azurerm.xpe_shared_poc
   }
 }
 
