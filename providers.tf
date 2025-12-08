@@ -4,6 +4,11 @@ terraform {
   }
 }
 
+# Provider por defecto (sin alias) - Usando Xpertal_XCS
+provider "azurerm" {
+  features {}
+  subscription_id = "6d94fbd2-8182-4943-a9b3-53d236df5469"
+}
 
 provider "azurerm" {
   alias = "xpe_shared_poc"
