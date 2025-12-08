@@ -2,7 +2,7 @@ name: IaC - Terraform Azure
 
 on:
   push:
-    branches: [ main, dev, qa, feature/** ]
+    branches: [ main, dev, qa, feature/**, claude/** ]
   pull_request:
     branches: [ main ]
   workflow_dispatch:
