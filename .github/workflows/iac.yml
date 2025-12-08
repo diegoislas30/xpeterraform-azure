@@ -65,32 +65,29 @@ jobs:
           # Contar recursos por acción
           CREATES=$(jq -r '[.resource_changes[]? | select(.change.actions[] == "create")] | length' tfplan.json)
           UPDATES=$(jq -r '[.resource_changes[]? | select(.change.actions[] == "update")] | length' tfplan.json)
-          DELETES=$(jq -r '[.resource_changes[]? | select(.change.actions[] == "delete")] | length' tfplan.json)
 
           echo "### Estadísticas de Cambios" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ **Recursos a crear:** $CREATES" >> $GITHUB_STEP_SUMMARY
           echo "- 🔄 **Recursos a modificar:** $UPDATES" >> $GITHUB_STEP_SUMMARY
-          echo "- ❌ **Recursos a eliminar:** $DELETES" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          # Listar recursos a crear
+          # Tabla de recursos a crear
           if [ "$CREATES" -gt 0 ]; then
             echo "### ✅ Recursos a Crear" >> $GITHUB_STEP_SUMMARY
-            jq -r '.resource_changes[]? | select(.change.actions[] == "create") | "- `\(.type).\(.name)` (\(.address))"' tfplan.json >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "| Tipo | Nombre | Dirección |" >> $GITHUB_STEP_SUMMARY
+            echo "|------|--------|-----------|" >> $GITHUB_STEP_SUMMARY
+            jq -r '.resource_changes[]? | select(.change.actions[] == "create") | "| \(.type) | \(.name) | \(.address) |"' tfplan.json >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
           fi
 
-          # Listar recursos a modificar
+          # Tabla de recursos a modificar
           if [ "$UPDATES" -gt 0 ]; then
             echo "### 🔄 Recursos a Modificar" >> $GITHUB_STEP_SUMMARY
-            jq -r '.resource_changes[]? | select(.change.actions[] == "update") | "- `\(.type).\(.name)` (\(.address))"' tfplan.json >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          # Listar recursos a eliminar
-          if [ "$DELETES" -gt 0 ]; then
-            echo "### ❌ Recursos a Eliminar" >> $GITHUB_STEP_SUMMARY
-            jq -r '.resource_changes[]? | select(.change.actions[] == "delete") | "- `\(.type).\(.name)` (\(.address))"' tfplan.json >> $GITHUB_STEP_SUMMARY
+            echo "| Tipo | Nombre | Dirección |" >> $GITHUB_STEP_SUMMARY
+            echo "|------|--------|-----------|" >> $GITHUB_STEP_SUMMARY
+            jq -r '.resource_changes[]? | select(.change.actions[] == "update") | "| \(.type) | \(.name) | \(.address) |"' tfplan.json >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
           fi
 
