@@ -93,4 +93,35 @@ module "xpe-vneticmsqlmidb-prd" {
  }
    
 
-## se agrega comentario de prueba para verificar el workflow.
+module "rg-container-portalcostos-prd" {
+  source = "./modules/resource_group"
+  resource_group_name = "rg-container-portalcostos-prd"
+  location = "southcentralus"
+  tags = {
+    UDN = "Xpertal"
+    OWNER = "Diego Enrique Islas Cuervo"
+    xpeowner = "diegoenrique.islas@xpertal.com"
+    proyecto = "Portal de Costos"
+    ambiente = "Productivo"
+  }
+  providers = {
+    azurerm = azurerm.xpe_shared_poc
+  }
+}
+
+module "container-portalcostos-prd" {
+  source = "./modules/arc"
+  resource_group_name = module.rg-container-portalcostos-prd.resource_group_name
+  location = module.rg-container-portalcostos-prd.resource_group_location
+  tags = {
+    UDN = "Xpertal"
+    OWNER = "Diego Enrique Islas Cuervo"
+    xpeowner = "diegoenrique.islas@xpertal.com"
+    proyecto = "Portal de Costos"
+    ambiente = "Productivo"
+  }
+
+  providers = {
+    azurerm = azurerm.xpe_shared_poc
+  }
+}
