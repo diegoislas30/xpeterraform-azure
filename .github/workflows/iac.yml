@@ -96,6 +96,30 @@ jobs:
           # Guardar resumen para el job de apply
           cat $GITHUB_STEP_SUMMARY > plan-summary.md
 
+      - name: 🔒 Validación de Seguridad de VMs
+        if: success()
+        continue-on-error: false
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Ejecutar security validator
+          chmod +x ./scripts/security-validator.sh
+
+          # Capturar output del validator
+          if ./scripts/security-validator.sh tfplan.json > security-report.md 2>&1; then
+            SECURITY_EXIT_CODE=0
+          else
+            SECURITY_EXIT_CODE=$?
+          fi
+
+          # Agregar reporte al step summary
+          cat security-report.md >> $GITHUB_STEP_SUMMARY
+
+          # Si el compliance es muy bajo, fallar el workflow
+          exit $SECURITY_EXIT_CODE
+
       - name: Publicar plan como artifact
         if: success()
         uses: actions/upload-artifact@v4
@@ -103,7 +127,9 @@ jobs:
           name: tfplan
           path: |
             tfplan
+            tfplan.json
             plan-summary.md
+            security-report.md
           retention-days: 5
 
   apply:
@@ -130,6 +156,17 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           if [ -f plan-summary.md ]; then
             cat plan-summary.md >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Mostrar reporte de seguridad
+          if [ -f security-report.md ]; then
+            cat security-report.md >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️  Reporte de seguridad no disponible" >> $GITHUB_STEP_SUMMARY
           fi
 
       - name: Azure Login (no subscription)
