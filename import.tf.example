@@ -1,0 +1,274 @@
+# ====================================================================
+# ARCHIVO DE EJEMPLO PARA IMPORTACIÓN DE RECURSOS
+# ====================================================================
+#
+# Este archivo muestra cómo organizar recursos importados desde Azure
+#
+# IMPORTANTE:
+# - Renombra este archivo a import.tf cuando vayas a usar
+# - Después de validar (terraform plan sin cambios), mueve a main.tf
+# - Mantén comentarios con comandos de importación usados
+#
+# ====================================================================
+
+# --------------------------------------------------------------------
+# Resource Groups
+# --------------------------------------------------------------------
+
+# Importado: 2026-01-21
+# Comando: terraform import azurerm_resource_group.production /subscriptions/SUB-ID/resourceGroups/rg-production
+resource "azurerm_resource_group" "production" {
+  name     = "rg-production"
+  location = "eastus"
+
+  tags = {
+    environment = "production"
+    managed-by  = "terraform"
+    imported    = "2026-01-21"
+  }
+}
+
+# --------------------------------------------------------------------
+# Virtual Networks
+# --------------------------------------------------------------------
+
+# Importado: 2026-01-21
+# Comando: terraform import azurerm_virtual_network.prod /subscriptions/SUB-ID/resourceGroups/rg-production/providers/Microsoft.Network/virtualNetworks/vnet-prod
+resource "azurerm_virtual_network" "prod" {
+  name                = "vnet-prod"
+  resource_group_name = azurerm_resource_group.production.name
+  location            = azurerm_resource_group.production.location
+  address_space       = ["10.0.0.0/16"]
+
+  tags = {
+    environment = "production"
+    managed-by  = "terraform"
+    imported    = "2026-01-21"
+  }
+}
+
+# --------------------------------------------------------------------
+# Subnets
+# --------------------------------------------------------------------
+
+# Importado: 2026-01-21
+# Comando: terraform import azurerm_subnet.web /subscriptions/SUB-ID/resourceGroups/rg-production/providers/Microsoft.Network/virtualNetworks/vnet-prod/subnets/subnet-web
+resource "azurerm_subnet" "web" {
+  name                 = "subnet-web"
+  resource_group_name  = azurerm_resource_group.production.name
+  virtual_network_name = azurerm_virtual_network.prod.name
+  address_prefixes     = ["10.0.1.0/24"]
+
+  # Service endpoints
+  service_endpoints = [
+    "Microsoft.Storage",
+    "Microsoft.KeyVault",
+  ]
+}
+
+# Importado: 2026-01-21
+# Comando: terraform import azurerm_subnet.app /subscriptions/SUB-ID/resourceGroups/rg-production/providers/Microsoft.Network/virtualNetworks/vnet-prod/subnets/subnet-app
+resource "azurerm_subnet" "app" {
+  name                 = "subnet-app"
+  resource_group_name  = azurerm_resource_group.production.name
+  virtual_network_name = azurerm_virtual_network.prod.name
+  address_prefixes     = ["10.0.2.0/24"]
+
+  service_endpoints = [
+    "Microsoft.Sql",
+    "Microsoft.Storage",
+  ]
+}
+
+# --------------------------------------------------------------------
+# Network Security Groups
+# --------------------------------------------------------------------
+
+# Importado: 2026-01-21
+# Comando: terraform import azurerm_network_security_group.web /subscriptions/SUB-ID/resourceGroups/rg-production/providers/Microsoft.Network/networkSecurityGroups/nsg-web
+resource "azurerm_network_security_group" "web" {
+  name                = "nsg-web"
+  resource_group_name = azurerm_resource_group.production.name
+  location            = azurerm_resource_group.production.location
+
+  tags = {
+    environment = "production"
+    managed-by  = "terraform"
+    imported    = "2026-01-21"
+  }
+}
+
+# NOTA: Las reglas NSG se importan por separado
+# Comando: terraform import azurerm_network_security_rule.allow_https /subscriptions/SUB-ID/resourceGroups/rg-production/providers/Microsoft.Network/networkSecurityGroups/nsg-web/securityRules/allow-https
+resource "azurerm_network_security_rule" "allow_https" {
+  name                        = "allow-https"
+  priority                    = 100
+  direction                   = "Inbound"
+  access                      = "Allow"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_range      = "443"
+  source_address_prefix       = "*"
+  destination_address_prefix  = "*"
+  resource_group_name         = azurerm_resource_group.production.name
+  network_security_group_name = azurerm_network_security_group.web.name
+}
+
+# --------------------------------------------------------------------
+# Storage Accounts
+# --------------------------------------------------------------------
+
+# Importado: 2026-01-21
+# Comando: terraform import azurerm_storage_account.main /subscriptions/SUB-ID/resourceGroups/rg-production/providers/Microsoft.Storage/storageAccounts/mystorageaccount
+resource "azurerm_storage_account" "main" {
+  name                     = "mystorageaccount"
+  resource_group_name      = azurerm_resource_group.production.name
+  location                 = azurerm_resource_group.production.location
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
+  account_kind             = "StorageV2"
+
+  # Seguridad
+  min_tls_version          = "TLS1_2"
+  enable_https_traffic_only = true
+
+  # Network rules
+  network_rules {
+    default_action = "Deny"
+    ip_rules       = []
+    virtual_network_subnet_ids = [
+      azurerm_subnet.app.id,
+    ]
+  }
+
+  tags = {
+    environment = "production"
+    managed-by  = "terraform"
+    imported    = "2026-01-21"
+  }
+}
+
+# --------------------------------------------------------------------
+# Virtual Machines (Ejemplo con módulo)
+# --------------------------------------------------------------------
+
+# Opción 1: Importar directamente (no recomendado para VMs complejas)
+# Comando: terraform import azurerm_linux_virtual_machine.web /subscriptions/SUB-ID/resourceGroups/rg-production/providers/Microsoft.Compute/virtualMachines/vm-web-01
+# resource "azurerm_linux_virtual_machine" "web" {
+#   name                = "vm-web-01"
+#   resource_group_name = azurerm_resource_group.production.name
+#   location            = azurerm_resource_group.production.location
+#   size                = "Standard_D2s_v3"
+#   ...
+# }
+
+# Opción 2: Usar módulo (RECOMENDADO)
+# 1. Importa a un recurso temporal
+# 2. Valida la configuración
+# 3. Refactoriza a módulo con terraform state mv
+
+module "vm_web_01" {
+  source = "./modules/virtual_machine"
+
+  vm_name             = "vm-web-01"
+  resource_group_name = azurerm_resource_group.production.name
+  location            = azurerm_resource_group.production.location
+  subnet_id           = azurerm_subnet.web.id
+
+  os_type = "linux"
+  vm_size = "Standard_D2s_v3"
+
+  use_marketplace_image = true
+  marketplace_image = {
+    publisher = "Canonical"
+    offer     = "0001-com-ubuntu-server-jammy"
+    sku       = "22_04-lts-gen2"
+    version   = "latest"
+  }
+
+  admin_username = "azureuser"
+  admin_ssh_keys = [
+    {
+      username   = "azureuser"
+      public_key = file("~/.ssh/id_rsa.pub")
+    }
+  ]
+
+  identity_type              = "SystemAssigned"
+  encryption_at_host_enabled = true
+
+  tags = {
+    environment = "production"
+    managed-by  = "terraform"
+    imported    = "2026-01-21"
+  }
+}
+
+# --------------------------------------------------------------------
+# Key Vaults
+# --------------------------------------------------------------------
+
+data "azurerm_client_config" "current" {}
+
+# Importado: 2026-01-21
+# Comando: terraform import azurerm_key_vault.main /subscriptions/SUB-ID/resourceGroups/rg-production/providers/Microsoft.KeyVault/vaults/kv-production
+resource "azurerm_key_vault" "main" {
+  name                = "kv-production"
+  resource_group_name = azurerm_resource_group.production.name
+  location            = azurerm_resource_group.production.location
+  tenant_id           = data.azurerm_client_config.current.tenant_id
+  sku_name            = "standard"
+
+  # Seguridad
+  purge_protection_enabled   = true
+  soft_delete_retention_days = 90
+
+  # Network ACLs
+  network_acls {
+    default_action = "Deny"
+    bypass         = "AzureServices"
+    virtual_network_subnet_ids = [
+      azurerm_subnet.app.id,
+    ]
+  }
+
+  tags = {
+    environment = "production"
+    managed-by  = "terraform"
+    imported    = "2026-01-21"
+  }
+}
+
+# ====================================================================
+# NOTAS DE IMPORTACIÓN
+# ====================================================================
+#
+# 1. VALIDACIÓN
+#    Después de importar, ejecuta:
+#    $ terraform plan
+#    Debe mostrar: "No changes. Your infrastructure matches the configuration."
+#
+# 2. AJUSTES COMUNES
+#    - Valores computed que cambian (IDs, timestamps)
+#    - Tags que faltan o difieren
+#    - Configuraciones por defecto que no están explícitas
+#
+# 3. ORDEN DE IMPORTACIÓN
+#    Importa en este orden para respetar dependencias:
+#    1. Resource Groups
+#    2. Networks (VNets, Subnets, NSGs)
+#    3. Storage / Key Vaults
+#    4. NICs / Public IPs
+#    5. VMs / Container Instances
+#
+# 4. REFACTORIZACIÓN A MÓDULOS
+#    Una vez validado, considera mover a módulos:
+#    $ terraform state mv azurerm_linux_virtual_machine.web module.vm_web.azurerm_linux_virtual_machine.this[0]
+#
+# 5. LIMPIEZA
+#    Cuando todo esté validado:
+#    - Mueve recursos de import.tf a archivos apropiados (main.tf, networks.tf, etc.)
+#    - Elimina import.tf
+#    - Commit cambios
+#
+# ====================================================================
