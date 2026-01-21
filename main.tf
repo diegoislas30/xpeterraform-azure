@@ -92,7 +92,7 @@ module "xpe-vneticmsqlmidb-prd" {
     }
  }
 
- module "rg-test-xpeansible {
+ module "rg-test-xpeansible" {
   source              = "./modules/resource_group"
   resource_group_name = "rg-test-xpeansible"
   location            = "eastus"
