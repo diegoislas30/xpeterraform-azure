@@ -48,12 +48,18 @@ on:
         type: boolean
         default: false
 
+      subscription_id:
+        description: 'ID de la suscripción de Azure donde está el recurso'
+        required: true
+        type: string
+
 env:
   TF_IN_AUTOMATION: true
-  ARM_TENANT_ID:     ${{ secrets.AZURE_TENANT_ID }}
-  ARM_CLIENT_ID:     ${{ secrets.AZURE_CLIENT_ID }}
-  ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-  ARM_ACCESS_KEY:    ${{ secrets.ARM_ACCESS_KEY }}
+  ARM_TENANT_ID:       ${{ secrets.AZURE_TENANT_ID }}
+  ARM_CLIENT_ID:       ${{ secrets.AZURE_CLIENT_ID }}
+  ARM_CLIENT_SECRET:   ${{ secrets.AZURE_CLIENT_SECRET }}
+  ARM_SUBSCRIPTION_ID: ${{ inputs.subscription_id }}
+  ARM_ACCESS_KEY:      ${{ secrets.ARM_ACCESS_KEY }}
 
 jobs:
   discover:
@@ -75,6 +81,7 @@ jobs:
           creds: >
             {"clientId":"${{ secrets.AZURE_CLIENT_ID }}",
              "clientSecret":"${{ secrets.AZURE_CLIENT_SECRET }}",
+             "subscriptionId":"${{ inputs.subscription_id }}",
              "tenantId":"${{ secrets.AZURE_TENANT_ID }}"}
 
       - name: Determinar nombre de rama
@@ -421,10 +428,10 @@ jobs:
       - name: Azure Login
         uses: azure/login@v2
         with:
-          allow-no-subscriptions: true
           creds: >
             {"clientId":"${{ secrets.AZURE_CLIENT_ID }}",
              "clientSecret":"${{ secrets.AZURE_CLIENT_SECRET }}",
+             "subscriptionId":"${{ inputs.subscription_id }}",
              "tenantId":"${{ secrets.AZURE_TENANT_ID }}"}
 
       - name: Setup Terraform
