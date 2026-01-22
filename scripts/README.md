@@ -218,6 +218,303 @@ bash -x ./scripts/security-validator.sh tfplan.json
 
 ---
 
+## 📥 Azure Resource Importer (`import-azure-resources.sh`)
+
+Script interactivo para importar recursos existentes de Azure a Terraform de manera guiada.
+
+### Características
+
+- ✅ Wizard interactivo paso a paso
+- ✅ Descubrimiento automático de recursos en Azure
+- ✅ Generación automática de configuración Terraform
+- ✅ Generación de comandos `terraform import`
+- ✅ Log automático de todas las importaciones
+- ✅ Soporte para múltiples tipos de recursos
+- ✅ Validación de dependencias
+
+### Tipos de Recursos Soportados
+
+| Recurso | Estado | Generación Automática |
+|---------|--------|----------------------|
+| **Resource Group** | ✅ Completo | ✅ Si |
+| **Virtual Network** | ✅ Completo | ✅ Si |
+| **Subnet** | ⚠️  Desarrollo | ⚠️  Parcial |
+| **Network Security Group** | ✅ Completo | ✅ Si |
+| **Virtual Machine (Linux)** | ⚠️  Desarrollo | ⚠️  Parcial |
+| **Virtual Machine (Windows)** | ⚠️  Desarrollo | ⚠️  Parcial |
+| **Network Interface** | ⚠️  Desarrollo | ⚠️  Parcial |
+| **Managed Disk** | ⚠️  Desarrollo | ⚠️  Parcial |
+| **Storage Account** | ✅ Completo | ✅ Si |
+| **Key Vault** | ⚠️  Desarrollo | ⚠️  Parcial |
+| **Azure SQL** | ⚠️  Desarrollo | ⚠️  Parcial |
+| **Container Registry** | ⚠️  Desarrollo | ⚠️  Parcial |
+
+### Uso
+
+#### Ejecución Interactiva
+
+```bash
+# Ejecutar el wizard
+./scripts/import-azure-resources.sh
+```
+
+#### Flujo del Wizard
+
+```
+1. Verificación de dependencias (az, terraform, jq)
+   ↓
+2. Login a Azure (si es necesario)
+   ↓
+3. Selección de suscripción
+   ↓
+4. Selección de Resource Group
+   ↓
+5. Menú de tipo de recurso
+   ↓
+6. Selección de recurso específico
+   ↓
+7. Generación de configuración Terraform
+   ↓
+8. Generación de comando import
+   ↓
+9. Opción de ejecutar import inmediatamente
+   ↓
+10. Log automático en archivo .md
+```
+
+### Ejemplo de Uso
+
+```bash
+$ ./scripts/import-azure-resources.sh
+
+╔═══════════════════════════════════════════════════════════╗
+║                                                           ║
+║        Azure Resource Importer for Terraform             ║
+║        Importación Manual de Recursos Existentes         ║
+║                                                           ║
+╚═══════════════════════════════════════════════════════════╝
+
+🔍 Verificando dependencias...
+✅ Todas las dependencias instaladas
+
+🔐 Verificando sesión de Azure...
+✅ Conectado a Azure
+   Suscripción: Xpertal Production
+   ID: 12345678-1234-1234-1234-123456789012
+
+📦 Seleccionar Resource Group...
+
+Resource Groups disponibles:
+
+  1) rg-production-eastus          [eastus]
+  2) rg-development-westus         [westus]
+  3) XPERTAL-Shared-xcs-ti-rg      [southcentralus]
+
+Selecciona el número del Resource Group: 1
+
+✅ Resource Group seleccionado: rg-production-eastus
+
+🎯 ¿Qué tipo de recurso deseas importar?
+
+  1) Resource Group
+  2) Virtual Network (VNet)
+  3) Subnet
+  4) Network Security Group (NSG)
+  5) Virtual Machine (Linux)
+  6) Virtual Machine (Windows)
+  7) Network Interface (NIC)
+  8) Managed Disk
+  9) Storage Account
+ 10) Key Vault
+  ...
+  0) Listar todos los recursos del RG
+  q) Salir
+
+Selecciona una opción: 2
+
+🌐 Importar Virtual Network
+
+VNets disponibles:
+  1) vnet-production
+  2) vnet-shared-services
+
+Selecciona el número de VNet: 1
+
+Configuración Terraform sugerida:
+
+# Virtual Network: vnet-production
+resource "azurerm_virtual_network" "vnet_production" {
+  name                = "vnet-production"
+  resource_group_name = "rg-production-eastus"
+  location            = "eastus"
+  address_space       = ["10.0.0.0/16", "172.16.0.0/16"]
+
+  tags = {
+    "environment" = "production"
+    "managed-by"  = "terraform"
+  }
+}
+
+📝 Comando de importación generado:
+
+terraform import azurerm_virtual_network.vnet_production \
+  /subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/rg-production-eastus/providers/Microsoft.Network/virtualNetworks/vnet-production
+
+¿Ejecutar importación ahora? (y/n): y
+
+azurerm_virtual_network.vnet_production: Importing from ID "/subscriptions/..."
+azurerm_virtual_network.vnet_production: Import prepared!
+azurerm_virtual_network.vnet_production: Refreshing state...
+
+Import successful!
+
+✅ VNet importada exitosamente
+
+Presiona Enter para continuar...
+```
+
+### Output del Script
+
+El script genera automáticamente un archivo de log:
+
+```bash
+$ ls -la
+-rw-r--r-- 1 user user  4521 Jan 21 14:30 import-log-20260121-143022.md
+```
+
+Contenido del log:
+
+```markdown
+# Log de Importación de Recursos Azure
+
+**Fecha:** Mon Jan 21 14:30:22 UTC 2026
+**Suscripción:** 12345678-1234-1234-1234-123456789012
+**Resource Group:** rg-production-eastus
+
+---
+
+## Virtual Network: vnet-production
+
+**Comando de importación:**
+```bash
+terraform import azurerm_virtual_network.vnet_production \
+  /subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/rg-production-eastus/providers/Microsoft.Network/virtualNetworks/vnet-production
+```
+
+**Configuración Terraform:**
+```hcl
+# Virtual Network: vnet-production
+resource "azurerm_virtual_network" "vnet_production" {
+  name                = "vnet-production"
+  resource_group_name = "rg-production-eastus"
+  location            = "eastus"
+  address_space       = ["10.0.0.0/16"]
+
+  tags = {
+    "environment" = "production"
+  }
+}
+```
+
+---
+
+## Storage Account: mystorageaccount
+
+...
+```
+
+### Dependencias
+
+```bash
+# Verificar que estén instaladas
+az --version      # Azure CLI
+terraform version # Terraform
+jq --version      # JSON processor
+```
+
+Instalación:
+
+```bash
+# Ubuntu/Debian
+sudo apt-get update
+sudo apt-get install -y azure-cli jq
+
+# macOS
+brew install azure-cli jq
+```
+
+### Workflow Recomendado
+
+1. **Ejecutar el script:**
+   ```bash
+   ./scripts/import-azure-resources.sh
+   ```
+
+2. **Copiar la configuración generada** a `import.tf` o el archivo apropiado
+
+3. **Ejecutar el comando de importación** (o permitir que el script lo haga)
+
+4. **Validar con terraform plan:**
+   ```bash
+   terraform plan
+   ```
+
+5. **Ajustar configuración** hasta que no haya diferencias
+
+6. **Commit del código:**
+   ```bash
+   git add import.tf
+   git commit -m "feat: Import existing Azure resources"
+   ```
+
+### Troubleshooting
+
+#### Error: "jq not found"
+
+```bash
+# Instalar jq
+sudo apt-get install jq  # Ubuntu/Debian
+brew install jq          # macOS
+```
+
+#### Error: "az: command not found"
+
+```bash
+# Instalar Azure CLI
+curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+```
+
+#### El script no lista recursos
+
+```bash
+# Verificar login
+az account show
+
+# Verificar permisos
+az role assignment list --assignee $(az account show --query user.name -o tsv)
+```
+
+### Limitaciones Actuales
+
+- ⚠️  Algunos recursos complejos (VMs, SQL) requieren ajuste manual
+- ⚠️  No importa automáticamente recursos anidados (NSG rules, subnets)
+- ⚠️  No detecta dependencias entre recursos
+
+### Roadmap
+
+- [ ] Soporte completo para todos los módulos del repositorio
+- [ ] Detección automática de dependencias
+- [ ] Importación en lote (múltiples recursos)
+- [ ] Integración con módulos existentes
+- [ ] Validación automática post-importación
+
+### Guía Completa
+
+Para documentación detallada, ver:
+- [Guía Completa de Importación](../docs/IMPORT-GUIDE.md)
+
+---
+
 ## 🔄 Otros Scripts
 
 ### `generate_ansible_inventory.sh`
