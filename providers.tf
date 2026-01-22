@@ -189,6 +189,12 @@ provider "azurerm" {
 }
 
 provider "azurerm" {
+  alias           = "Xpertal_XCS"
+  features {}
+  subscription_id = "6d94fbd2-8182-4943-a9b3-53d236df5469"
+}
+
+provider "azurerm" {
   alias           = "xpertal_shared_xcs"
   features {}
   subscription_id = "9442ead9-7f87-4f7a-b248-53e511abefd7"
