@@ -36,18 +36,6 @@ on:
         required: true
         type: string
 
-      branch_name:
-        description: 'Rama donde se hará el import (default: import/[resource_name])'
-        required: false
-        type: string
-        default: ''
-
-      use_module:
-        description: '¿Usar módulo del repositorio? (solo para VMs y recursos complejos)'
-        required: false
-        type: boolean
-        default: false
-
       subscription_id:
         description: 'ID de la suscripción de Azure donde está el recurso'
         required: true
@@ -57,23 +45,10 @@ permissions:
   contents: write
   pull-requests: write
 
-env:
-  TF_IN_AUTOMATION: true
-  ARM_TENANT_ID:       ${{ secrets.AZURE_TENANT_ID }}
-  ARM_CLIENT_ID:       ${{ secrets.AZURE_CLIENT_ID }}
-  ARM_CLIENT_SECRET:   ${{ secrets.AZURE_CLIENT_SECRET }}
-  ARM_SUBSCRIPTION_ID: ${{ inputs.subscription_id }}
-  ARM_ACCESS_KEY:      ${{ secrets.ARM_ACCESS_KEY }}
-
 jobs:
-  discover:
-    name: 🔍 Descubrir Recurso en Azure
+  generate-and-pr:
+    name: 📝 Generar código y crear PR
     runs-on: ubuntu-latest
-    outputs:
-      resource_id: ${{ steps.discover.outputs.resource_id }}
-      resource_config: ${{ steps.discover.outputs.resource_config }}
-      terraform_address: ${{ steps.discover.outputs.terraform_address }}
-      branch_name: ${{ steps.branch.outputs.branch_name }}
 
     steps:
       - name: Checkout
@@ -88,18 +63,7 @@ jobs:
              "subscriptionId":"${{ inputs.subscription_id }}",
              "tenantId":"${{ secrets.AZURE_TENANT_ID }}"}
 
-      - name: Determinar nombre de rama
-        id: branch
-        run: |
-          if [ -z "${{ inputs.branch_name }}" ]; then
-            BRANCH="import/${{ inputs.resource_type }}-${{ inputs.terraform_resource_name }}"
-          else
-            BRANCH="${{ inputs.branch_name }}"
-          fi
-          echo "branch_name=$BRANCH" >> $GITHUB_OUTPUT
-          echo "📌 Rama a usar: $BRANCH"
-
-      - name: Descubrir recurso en Azure
+      - name: Descubrir recurso y generar código
         id: discover
         run: |
           echo "🔍 Buscando recurso en Azure..."
@@ -109,14 +73,11 @@ jobs:
           RG="${{ inputs.resource_group }}"
           TF_NAME="${{ inputs.terraform_resource_name }}"
 
-          # Función para obtener Resource ID según tipo
           case "$RESOURCE_TYPE" in
 
             resource_group)
               RESOURCE_ID=$(az group show -n "$RESOURCE_NAME" --query id -o tsv)
               TF_ADDRESS="azurerm_resource_group.${TF_NAME}"
-
-              # Generar configuración
               LOCATION=$(az group show -n "$RESOURCE_NAME" --query location -o tsv)
               TAGS=$(az group show -n "$RESOURCE_NAME" --query tags -o json)
 
@@ -124,8 +85,7 @@ jobs:
           resource "azurerm_resource_group" "$TF_NAME" {
             name     = "$RESOURCE_NAME"
             location = "$LOCATION"
-
-            tags = $TAGS
+            tags     = $TAGS
           }
           EOF
           )
@@ -134,8 +94,6 @@ jobs:
             virtual_network)
               RESOURCE_ID=$(az network vnet show -g "$RG" -n "$RESOURCE_NAME" --query id -o tsv)
               TF_ADDRESS="azurerm_virtual_network.${TF_NAME}"
-
-              # Generar configuración
               VNET_DATA=$(az network vnet show -g "$RG" -n "$RESOURCE_NAME" -o json)
               LOCATION=$(echo "$VNET_DATA" | jq -r '.location')
               ADDRESS_SPACE=$(echo "$VNET_DATA" | jq -r '.addressSpace.addressPrefixes | join("\", \"")' | sed 's/^/["/;s/$/"]/')
@@ -147,27 +105,7 @@ jobs:
             resource_group_name = "$RG"
             location            = "$LOCATION"
             address_space       = $ADDRESS_SPACE
-
-            tags = $TAGS
-          }
-          EOF
-          )
-              ;;
-
-            subnet)
-              VNET_NAME=$(az network vnet subnet show -g "$RG" --vnet-name "${{ github.event.inputs.vnet_name }}" -n "$RESOURCE_NAME" --query "id" -o tsv | cut -d'/' -f9)
-              RESOURCE_ID=$(az network vnet subnet show -g "$RG" --vnet-name "$VNET_NAME" -n "$RESOURCE_NAME" --query id -o tsv)
-              TF_ADDRESS="azurerm_subnet.${TF_NAME}"
-
-              SUBNET_DATA=$(az network vnet subnet show -g "$RG" --vnet-name "$VNET_NAME" -n "$RESOURCE_NAME" -o json)
-              ADDRESS_PREFIX=$(echo "$SUBNET_DATA" | jq -r '.addressPrefix')
-
-              CONFIG=$(cat <<EOF
-          resource "azurerm_subnet" "$TF_NAME" {
-            name                 = "$RESOURCE_NAME"
-            resource_group_name  = "$RG"
-            virtual_network_name = "$VNET_NAME"
-            address_prefixes     = ["$ADDRESS_PREFIX"]
+            tags                = $TAGS
           }
           EOF
           )
@@ -176,7 +114,6 @@ jobs:
             network_security_group)
               RESOURCE_ID=$(az network nsg show -g "$RG" -n "$RESOURCE_NAME" --query id -o tsv)
               TF_ADDRESS="azurerm_network_security_group.${TF_NAME}"
-
               NSG_DATA=$(az network nsg show -g "$RG" -n "$RESOURCE_NAME" -o json)
               LOCATION=$(echo "$NSG_DATA" | jq -r '.location')
               TAGS=$(echo "$NSG_DATA" | jq '.tags')
@@ -186,13 +123,8 @@ jobs:
             name                = "$RESOURCE_NAME"
             resource_group_name = "$RG"
             location            = "$LOCATION"
-
-            tags = $TAGS
+            tags                = $TAGS
           }
-
-          # NOTA: Las reglas NSG se deben importar por separado
-          # Para cada regla ejecuta:
-          # terraform import azurerm_network_security_rule.[nombre] /subscriptions/.../networkSecurityGroups/$RESOURCE_NAME/securityRules/[rule-name]
           EOF
           )
               ;;
@@ -200,7 +132,6 @@ jobs:
             storage_account)
               RESOURCE_ID=$(az storage account show -g "$RG" -n "$RESOURCE_NAME" --query id -o tsv)
               TF_ADDRESS="azurerm_storage_account.${TF_NAME}"
-
               SA_DATA=$(az storage account show -g "$RG" -n "$RESOURCE_NAME" -o json)
               LOCATION=$(echo "$SA_DATA" | jq -r '.location')
               SKU=$(echo "$SA_DATA" | jq -r '.sku.name')
@@ -217,8 +148,7 @@ jobs:
             account_tier             = "$TIER"
             account_replication_type = "$REPLICATION"
             account_kind             = "$KIND"
-
-            tags = $TAGS
+            tags                     = $TAGS
           }
           EOF
           )
@@ -227,7 +157,6 @@ jobs:
             key_vault)
               RESOURCE_ID=$(az keyvault show -g "$RG" -n "$RESOURCE_NAME" --query id -o tsv)
               TF_ADDRESS="azurerm_key_vault.${TF_NAME}"
-
               KV_DATA=$(az keyvault show -g "$RG" -n "$RESOURCE_NAME" -o json)
               LOCATION=$(echo "$KV_DATA" | jq -r '.location')
               TENANT_ID=$(echo "$KV_DATA" | jq -r '.properties.tenantId')
@@ -235,97 +164,49 @@ jobs:
               TAGS=$(echo "$KV_DATA" | jq '.tags')
 
               CONFIG=$(cat <<EOF
-          data "azurerm_client_config" "current" {}
-
           resource "azurerm_key_vault" "$TF_NAME" {
             name                = "$RESOURCE_NAME"
             resource_group_name = "$RG"
             location            = "$LOCATION"
             tenant_id           = "$TENANT_ID"
             sku_name            = "$SKU"
-
-            tags = $TAGS
+            tags                = $TAGS
           }
           EOF
           )
               ;;
 
-            virtual_machine_linux|virtual_machine_windows)
+            virtual_machine_linux)
               RESOURCE_ID=$(az vm show -g "$RG" -n "$RESOURCE_NAME" --query id -o tsv)
+              TF_ADDRESS="azurerm_linux_virtual_machine.${TF_NAME}"
+              VM_DATA=$(az vm show -g "$RG" -n "$RESOURCE_NAME" -o json)
+              LOCATION=$(echo "$VM_DATA" | jq -r '.location')
+              VM_SIZE=$(echo "$VM_DATA" | jq -r '.hardwareProfile.vmSize')
+              ADMIN_USER=$(echo "$VM_DATA" | jq -r '.osProfile.adminUsername')
+              TAGS=$(echo "$VM_DATA" | jq '.tags')
 
-              if [ "${{ inputs.use_module }}" = "true" ]; then
-                TF_ADDRESS="module.${TF_NAME}.azurerm_linux_virtual_machine.this[0]"
+              # Obtener NIC ID
+              NIC_ID=$(echo "$VM_DATA" | jq -r '.networkProfile.networkInterfaces[0].id')
 
-                VM_DATA=$(az vm show -g "$RG" -n "$RESOURCE_NAME" -o json)
-                LOCATION=$(echo "$VM_DATA" | jq -r '.location')
-                VM_SIZE=$(echo "$VM_DATA" | jq -r '.hardwareProfile.vmSize')
-                TAGS=$(echo "$VM_DATA" | jq '.tags')
+              CONFIG=$(cat <<EOF
+          resource "azurerm_linux_virtual_machine" "$TF_NAME" {
+            name                  = "$RESOURCE_NAME"
+            resource_group_name   = "$RG"
+            location              = "$LOCATION"
+            size                  = "$VM_SIZE"
+            admin_username        = "$ADMIN_USER"
+            network_interface_ids = ["$NIC_ID"]
 
-                CONFIG=$(cat <<EOF
-          # IMPORTANTE: Este recurso usa el módulo virtual_machine del repositorio
-          # Primero importa con: terraform import 'module.${TF_NAME}.azurerm_linux_virtual_machine.this[0]' $RESOURCE_ID
-          # Luego ajusta la configuración según necesites
-
-          module "$TF_NAME" {
-            source = "./modules/virtual_machine"
-
-            vm_name             = "$RESOURCE_NAME"
-            resource_group_name = "$RG"
-            location            = "$LOCATION"
-            subnet_id           = "COMPLETAR_SUBNET_ID"  # Obtener con: az vm nic list
-
-            os_type = "$([ "$RESOURCE_TYPE" = "virtual_machine_linux" ] && echo "linux" || echo "windows")"
-            vm_size = "$VM_SIZE"
-
-            # Usar imagen de Marketplace o source_image_id según corresponda
-            use_marketplace_image = true  # VERIFICAR
-            marketplace_image = {
-              publisher = "Canonical"  # VERIFICAR
-              offer     = "0001-com-ubuntu-server-jammy"  # VERIFICAR
-              sku       = "22_04-lts-gen2"  # VERIFICAR
-              version   = "latest"
+            admin_ssh_key {
+              username   = "$ADMIN_USER"
+              public_key = "COMPLETAR_SSH_PUBLIC_KEY"
             }
-
-            admin_username = "azureuser"  # ACTUALIZAR
-            $([ "$RESOURCE_TYPE" = "virtual_machine_linux" ] && echo 'admin_ssh_keys = [
-              {
-                username   = "azureuser"
-                public_key = file("~/.ssh/id_rsa.pub")  # ACTUALIZAR
-              }
-            ]' || echo 'admin_password = var.admin_password  # ACTUALIZAR')
-
-            tags = $TAGS
-          }
-          EOF
-          )
-              else
-                if [ "$RESOURCE_TYPE" = "virtual_machine_linux" ]; then
-                  TF_ADDRESS="azurerm_linux_virtual_machine.${TF_NAME}"
-                else
-                  TF_ADDRESS="azurerm_windows_virtual_machine.${TF_NAME}"
-                fi
-
-                CONFIG=$(cat <<EOF
-          # ADVERTENCIA: Esta configuración es básica y requiere ajustes manuales
-          # Se recomienda usar use_module=true para VMs complejas
-
-          resource "$([ "$RESOURCE_TYPE" = "virtual_machine_linux" ] && echo "azurerm_linux_virtual_machine" || echo "azurerm_windows_virtual_machine")" "$TF_NAME" {
-            name                = "$RESOURCE_NAME"
-            resource_group_name = "$RG"
-            location            = "COMPLETAR"
-            size                = "COMPLETAR"
-            admin_username      = "COMPLETAR"
-
-            network_interface_ids = [
-              "COMPLETAR"  # Obtener con: az vm nic list
-            ]
 
             os_disk {
               caching              = "ReadWrite"
               storage_account_type = "Premium_LRS"
             }
 
-            # Completar según imagen usada
             source_image_reference {
               publisher = "COMPLETAR"
               offer     = "COMPLETAR"
@@ -333,11 +214,48 @@ jobs:
               version   = "latest"
             }
 
-            tags = {}
+            tags = $TAGS
           }
           EOF
           )
-              fi
+              ;;
+
+            virtual_machine_windows)
+              RESOURCE_ID=$(az vm show -g "$RG" -n "$RESOURCE_NAME" --query id -o tsv)
+              TF_ADDRESS="azurerm_windows_virtual_machine.${TF_NAME}"
+              VM_DATA=$(az vm show -g "$RG" -n "$RESOURCE_NAME" -o json)
+              LOCATION=$(echo "$VM_DATA" | jq -r '.location')
+              VM_SIZE=$(echo "$VM_DATA" | jq -r '.hardwareProfile.vmSize')
+              ADMIN_USER=$(echo "$VM_DATA" | jq -r '.osProfile.adminUsername')
+              TAGS=$(echo "$VM_DATA" | jq '.tags')
+              NIC_ID=$(echo "$VM_DATA" | jq -r '.networkProfile.networkInterfaces[0].id')
+
+              CONFIG=$(cat <<EOF
+          resource "azurerm_windows_virtual_machine" "$TF_NAME" {
+            name                  = "$RESOURCE_NAME"
+            resource_group_name   = "$RG"
+            location              = "$LOCATION"
+            size                  = "$VM_SIZE"
+            admin_username        = "$ADMIN_USER"
+            admin_password        = var.vm_admin_password
+            network_interface_ids = ["$NIC_ID"]
+
+            os_disk {
+              caching              = "ReadWrite"
+              storage_account_type = "Premium_LRS"
+            }
+
+            source_image_reference {
+              publisher = "COMPLETAR"
+              offer     = "COMPLETAR"
+              sku       = "COMPLETAR"
+              version   = "latest"
+            }
+
+            tags = $TAGS
+          }
+          EOF
+          )
               ;;
 
             *)
@@ -351,293 +269,145 @@ jobs:
             exit 1
           fi
 
-          echo "✅ Recurso encontrado"
-          echo "📌 Resource ID: $RESOURCE_ID"
-          echo "📌 Terraform Address: $TF_ADDRESS"
+          echo "✅ Recurso encontrado: $RESOURCE_ID"
 
-          # Guardar outputs (escapar para JSON)
-          {
-            echo "resource_id=$RESOURCE_ID"
-            echo "terraform_address=$TF_ADDRESS"
-            echo 'resource_config<<EOF'
-            echo "$CONFIG"
-            echo 'EOF'
-          } >> $GITHUB_OUTPUT
+          # Guardar outputs
+          echo "resource_id=$RESOURCE_ID" >> $GITHUB_OUTPUT
+          echo "terraform_address=$TF_ADDRESS" >> $GITHUB_OUTPUT
 
-          # Guardar para siguiente job
-          echo "$CONFIG" > /tmp/config.tf
+          # Guardar config para siguiente paso
+          echo "$CONFIG" > /tmp/resource_config.tf
 
-      - name: Upload config
-        uses: actions/upload-artifact@v4
-        with:
-          name: terraform-config
-          path: /tmp/config.tf
-          retention-days: 1
-
-  import:
-    name: 📥 Importar Recurso a Terraform
-    needs: discover
-    runs-on: ubuntu-latest
-    environment: prd  # Requiere aprobación
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Crear rama de import
-        run: |
-          git config user.name "GitHub Actions Bot"
-          git config user.email "actions@github.com"
-
-          BRANCH="${{ needs.discover.outputs.branch_name }}"
-          git checkout -b "$BRANCH"
-
-      - name: Download config
-        uses: actions/download-artifact@v4
-        with:
-          name: terraform-config
-          path: /tmp
-
-      - name: Agregar recurso a main.tf
-        run: |
-          # Agregar separador y recurso al final de main.tf
-          cat >> main.tf <<EOF
-
-          # ====================================================================
-          # RECURSO IMPORTADO DESDE AZURE
-          # Tipo: ${{ inputs.resource_type }} | Nombre: ${{ inputs.resource_name }}
-          # Resource Group: ${{ inputs.resource_group }}
-          # Importado: $(date -u +"%Y-%m-%d %H:%M:%S UTC") por ${{ github.actor }}
-          # ====================================================================
+          # Generar bloque import
+          cat > /tmp/import_block.tf <<EOF
+          import {
+            to = $TF_ADDRESS
+            id = "$RESOURCE_ID"
+          }
           EOF
 
-          cat /tmp/config.tf >> main.tf
-
-          echo "📝 Recurso agregado a main.tf:"
-          tail -30 main.tf
-
-      - name: Azure Login
-        uses: azure/login@v2
-        with:
-          creds: >
-            {"clientId":"${{ secrets.AZURE_CLIENT_ID }}",
-             "clientSecret":"${{ secrets.AZURE_CLIENT_SECRET }}",
-             "subscriptionId":"${{ inputs.subscription_id }}",
-             "tenantId":"${{ secrets.AZURE_TENANT_ID }}"}
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-
-      - name: Terraform Init (with remote backend)
+      - name: Crear rama y agregar código
+        id: create-branch
         run: |
-          echo "🔧 Inicializando Terraform con backend remoto..."
+          BRANCH="import/${{ inputs.resource_type }}-${{ inputs.terraform_resource_name }}"
+          echo "branch_name=$BRANCH" >> $GITHUB_OUTPUT
 
-          terraform init -input=false \
-            -backend-config="resource_group_name=terraform" \
-            -backend-config="storage_account_name=xpeterraformpoc" \
-            -backend-config="container_name=terraform-tfstate" \
-            -backend-config="key=${{ needs.discover.outputs.branch_name }}.tfstate"
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git checkout -b "$BRANCH"
 
-          echo "✅ Terraform inicializado con backend remoto"
+          # Agregar bloque import y configuración a main.tf
+          cat >> main.tf <<EOF
 
-      - name: Terraform Import
-        id: import
-        run: |
-          echo "📥 Importando recurso a Terraform..."
-          echo ""
-          echo "Terraform Address: ${{ needs.discover.outputs.terraform_address }}"
-          echo "Azure Resource ID: ${{ needs.discover.outputs.resource_id }}"
-          echo ""
+          # ============================================================================
+          # IMPORT: ${{ inputs.resource_type }} - ${{ inputs.resource_name }}
+          # Subscription: ${{ inputs.subscription_id }}
+          # Generado: $(date -u +"%Y-%m-%d %H:%M:%S UTC") por ${{ github.actor }}
+          # ============================================================================
 
-          # Importar el recurso
-          terraform import \
-            ${{ needs.discover.outputs.terraform_address }} \
-            "${{ needs.discover.outputs.resource_id }}"
+          EOF
 
-          echo ""
-          echo "✅ Recurso importado exitosamente al state remoto"
+          cat /tmp/import_block.tf >> main.tf
+          echo "" >> main.tf
+          cat /tmp/resource_config.tf >> main.tf
 
-      - name: Terraform Validate
-        run: |
-          echo "🔍 Validando configuración..."
-          terraform validate
+          echo "📝 Código agregado a main.tf:"
+          echo "----------------------------------------"
+          tail -40 main.tf
 
-      - name: Terraform Plan
-        id: plan
-        continue-on-error: true
-        run: |
-          echo "📊 Ejecutando terraform plan..."
-          terraform plan -out=tfplan -input=false
-
-          # Convertir a JSON para análisis
-          terraform show -json tfplan > tfplan.json
-
-          # Contar cambios
-          CHANGES=$(jq -r '[.resource_changes[]? | select(.change.actions[] != "no-op")] | length' tfplan.json)
-
-          echo "changes=$CHANGES" >> $GITHUB_OUTPUT
-
-          if [ "$CHANGES" -eq 0 ]; then
-            echo "✅ Configuración perfecta - No hay diferencias"
-            echo "status=perfect" >> $GITHUB_OUTPUT
-          else
-            echo "⚠️  Configuración requiere ajustes - $CHANGES cambios detectados"
-            echo "status=needs_adjustment" >> $GITHUB_OUTPUT
-
-            # Mostrar diferencias
-            terraform show tfplan
-          fi
-
-      - name: Commit main.tf
+      - name: Commit y Push
         run: |
           git add main.tf
+          git commit -m "feat: Import ${{ inputs.resource_type }} - ${{ inputs.resource_name }}
 
-          # Mensaje de commit detallado
-          cat > commit_msg.txt <<EOF
-          feat: Import ${{ inputs.resource_type }} - ${{ inputs.resource_name }}
-
-          Imported Azure resource to Terraform state
-
-          Resource Details:
+          Adds import block and resource configuration for:
           - Type: ${{ inputs.resource_type }}
           - Name: ${{ inputs.resource_name }}
           - Resource Group: ${{ inputs.resource_group }}
-          - Terraform Name: ${{ inputs.terraform_resource_name }}
+          - Subscription: ${{ inputs.subscription_id }}
 
-          Import Status:
-          - State: ✅ Imported to remote backend
-          - Plan: ${{ steps.plan.outputs.status }}
-          - Changes Detected: ${{ steps.plan.outputs.changes }}
+          The import will be executed when this PR is merged and
+          the IAC workflow runs on main branch.
 
-          Terraform Address: ${{ needs.discover.outputs.terraform_address }}
-          Azure Resource ID: ${{ needs.discover.outputs.resource_id }}
+          Generated by: @${{ github.actor }}"
 
-          Imported by: @${{ github.actor }}
-          Workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          EOF
+          git push origin "${{ steps.create-branch.outputs.branch_name }}"
 
-          git commit -F commit_msg.txt
-          git push origin "${{ needs.discover.outputs.branch_name }}"
-
-          echo "✅ Código commiteado y pusheado"
-
-      - name: 📊 Generar Summary
-        if: always()
+      - name: Crear Pull Request
         run: |
-          cat << 'EOF' >> $GITHUB_STEP_SUMMARY
-          # ✅ Recurso Importado a Terraform
+          gh pr create \
+            --title "🔄 Import: ${{ inputs.resource_type }} - ${{ inputs.resource_name }}" \
+            --body "$(cat <<'EOFPR'
+          ## 📥 Import de Recurso Azure
 
-          ## 📋 Detalles del Recurso
+          Este PR agrega la configuración para importar un recurso existente de Azure a Terraform.
+
+          ### 📋 Detalles del Recurso
 
           | Campo | Valor |
           |-------|-------|
           | **Tipo** | ${{ inputs.resource_type }} |
           | **Nombre en Azure** | ${{ inputs.resource_name }} |
           | **Resource Group** | ${{ inputs.resource_group }} |
-          | **Nombre Terraform** | ${{ inputs.terraform_resource_name }} |
-          | **Usar Módulo** | ${{ inputs.use_module }} |
+          | **Subscription** | ${{ inputs.subscription_id }} |
+          | **Nombre en Terraform** | ${{ inputs.terraform_resource_name }} |
 
-          ## 🔧 Estado de Importación
+          ### 🔄 Flujo de Import
 
-          | Estado | Resultado |
-          |--------|-----------|
-          | **Recurso encontrado** | ✅ Si |
-          | **Importado al state** | ✅ Si |
-          | **Backend remoto** | ✅ Azure Blob Storage |
-          | **Terraform plan** | ${{ steps.plan.outputs.status }} |
-          | **Cambios detectados** | ${{ steps.plan.outputs.changes }} |
+          1. ✅ Recurso encontrado en Azure
+          2. ✅ Código generado (bloque `import {}` + recurso)
+          3. ⏳ **Revisar este PR** - El workflow IAC mostrará el plan
+          4. ⏳ Aprobar y mergear
+          5. ⏳ El import se ejecutará automáticamente en main
 
-          ## 📍 Referencias
+          ### 📝 Cambios en este PR
 
-          - **Terraform Address:** `${{ needs.discover.outputs.terraform_address }}`
-          - **Azure Resource ID:** `${{ needs.discover.outputs.resource_id }}`
-          - **Rama creada:** `${{ needs.discover.outputs.branch_name }}`
-          - **Archivo:** `main.tf`
+          - Se agrega bloque `import {}` en `main.tf`
+          - Se agrega configuración del recurso en `main.tf`
 
-          ## 📝 Configuración Generada
+          ### ⚠️ Antes de aprobar
 
-          ```hcl
-          ${{ needs.discover.outputs.resource_config }}
-          ```
+          1. Revisa el plan del workflow IAC en este PR
+          2. Verifica que el plan muestre **"will be imported"** (no "will be created")
+          3. Si hay campos marcados como "COMPLETAR", edítalos antes de mergear
 
-          ## ⏭️  Próximos Pasos
-
-          1. ✅ El recurso ha sido importado al state remoto
-          2. ✅ La configuración fue agregada a `main.tf` en la rama `${{ needs.discover.outputs.branch_name }}`
-          3. ⏭️  Haz pull de la rama para trabajar localmente:
-             ```bash
-             git fetch origin
-             git checkout ${{ needs.discover.outputs.branch_name }}
-             ```
-          4. ⏭️  Si el plan muestra diferencias (${{ steps.plan.outputs.changes }} cambios):
-             - Ajusta la configuración en `main.tf`
-             - Ejecuta `terraform plan` hasta que no haya cambios
-          5. ⏭️  Crea un Pull Request para review y merge:
-             ```bash
-             gh pr create --title "Import ${{ inputs.resource_type }}: ${{ inputs.resource_name }}"
-             ```
-
-          EOF
-
-          if [ "${{ steps.plan.outputs.status }}" = "needs_adjustment" ]; then
-            cat << 'EOF' >> $GITHUB_STEP_SUMMARY
-
-          ## ⚠️  Ajustes Necesarios
-
-          La configuración generada no coincide exactamente con el recurso en Azure.
-          Esto es **normal** y esperado. Debes ajustar manualmente:
-
-          1. Revisa el output de `terraform plan` arriba
-          2. Identifica las diferencias (valores computed, defaults, etc.)
-          3. Ajusta `main.tf` según sea necesario
-          4. Ejecuta `terraform plan` localmente hasta obtener "No changes"
-
-          **Valores comunes que requieren ajuste:**
-          - IDs de recursos relacionados (subnet_id, vnet_id, etc.)
-          - Contraseñas y secretos (usa variables)
-          - Configuraciones por defecto no explícitas
-          - Tags adicionales
-
-          EOF
-          fi
-
-      - name: Crear Pull Request
-        if: steps.plan.outputs.status == 'perfect'
-        run: |
-          gh pr create \
-            --title "Import ${{ inputs.resource_type }}: ${{ inputs.resource_name }}" \
-            --body "$(cat <<'EOFPR'
-          ## 📥 Import de Recurso Azure
-
-          Este PR importa un recurso existente de Azure a Terraform.
-
-          ### Recurso Importado
-
-          - **Tipo:** ${{ inputs.resource_type }}
-          - **Nombre:** ${{ inputs.resource_name }}
-          - **Resource Group:** ${{ inputs.resource_group }}
-
-          ### Validación
-
-          - ✅ Recurso importado al state remoto
-          - ✅ Configuración validada con `terraform plan`
-          - ✅ No hay diferencias detectadas
-
-          ### Archivos Modificados
-
-          - `main.tf` - Configuración del recurso importado agregada
-
-          ### Review Checklist
-
-          - [ ] Revisar configuración agregada en `main.tf`
-          - [ ] Verificar que los valores sean correctos
-          - [ ] Verificar tags y metadata
-          - [ ] Aprobar y merge
-
+          ---
           **Workflow Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           EOFPR
           )" \
-            --head "${{ needs.discover.outputs.branch_name }}" \
+            --head "${{ steps.create-branch.outputs.branch_name }}" \
             --base main
         env:
           GH_TOKEN: ${{ github.token }}
+
+      - name: 📊 Resumen
+        run: |
+          cat << 'EOF' >> $GITHUB_STEP_SUMMARY
+          # ✅ PR Creado para Import
+
+          ## 📋 Recurso
+
+          | Campo | Valor |
+          |-------|-------|
+          | **Tipo** | ${{ inputs.resource_type }} |
+          | **Nombre** | ${{ inputs.resource_name }} |
+          | **Resource Group** | ${{ inputs.resource_group }} |
+          | **Terraform Name** | ${{ inputs.terraform_resource_name }} |
+
+          ## 🔄 Próximos Pasos
+
+          1. ✅ PR creado en rama `${{ steps.create-branch.outputs.branch_name }}`
+          2. ⏳ Revisa el plan en el workflow IAC del PR
+          3. ⏳ Aprueba y mergea el PR
+          4. ⏳ El import se ejecutará automáticamente
+
+          ## 📝 Código Generado
+
+          ```hcl
+          import {
+            to = ${{ steps.discover.outputs.terraform_address }}
+            id = "${{ steps.discover.outputs.resource_id }}"
+          }
+          ```
+
+          EOF
