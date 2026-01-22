@@ -53,6 +53,10 @@ on:
         required: true
         type: string
 
+permissions:
+  contents: write
+  pull-requests: write
+
 env:
   TF_IN_AUTOMATION: true
   ARM_TENANT_ID:       ${{ secrets.AZURE_TENANT_ID }}
