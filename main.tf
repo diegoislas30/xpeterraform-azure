@@ -92,21 +92,7 @@ module "xpe-vneticmsqlmidb-prd" {
     }
  }
 
- module "rg-test-xpeansible" {
-  source              = "./modules/resource_group"
-  resource_group_name = "rg-test-xpeansible"
-  location            = "eastus"
-  tags                = {
-    UDN      = "Xpertal"
-    OWNER    = "Diego Enrique Islas Cuervo"
-    xpeowner = "diegoenrique.islas@xpertal.com"
-    proyecto = "Test Xpeansible"
-    ambiente = "Test"
-  }
-  providers   = {
-    azurerm = azurerm.xpe_shared_poc
-  }
- }
+ 
 
 
 
