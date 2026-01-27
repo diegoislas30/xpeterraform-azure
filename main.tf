@@ -91,42 +91,11 @@ module "xpe-vneticmsqlmidb-prd" {
       azurerm = azurerm.Xpertal_XCS
     }
  }
-   
 
-module "rg-container-portalcostos-prd" {
-  source = "./modules/resource_group"
-  resource_group_name = "rg-container-portalcostos-prd"
-  location = "southcentralus"
-  tags = {
-    UDN = "Xpertal"
-    OWNER = "Diego Enrique Islas Cuervo"
-    xpeowner = "diegoenrique.islas@xpertal.com"
-    proyecto = "Portal de Costos"
-    ambiente = "Productivo"
-  }
-  providers = {
-    azurerm = azurerm.xpe_shared_poc
-  }
-}
+ 
 
-module "acr" {
-  source = "./modules/acr"
-  resource_group_name = module.rg-container-portalcostos-prd.resource_group_name
-  location            = module.rg-container-portalcostos-prd.resource_group_location
-  acr_name            = "xpeportalcostov1"
-  sku                 = "Standard"
-  admin_enabled       = true
 
-  tags = {
-    UDN      = "Xpertal"
-    OWNER    = "Diego Enrique Islas Cuervo"
-    xpeowner = "diegoenrique.islas@xpertal.com"
-    proyecto = "Portal de Costos"
-    ambiente = "dev"
-  }
-  providers = {
-    azurerm = azurerm.xpe_shared_poc
-  }
-}
+
+
 
 
