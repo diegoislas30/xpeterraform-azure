@@ -143,7 +143,7 @@ module "xpe-vneticmsqlmidb-prd" {
 
   peerings = [
     {
-      name             = "to-seg-core"
+      name             = "sailpoint-qa-to-seg-core"
       remote_vnet_id   = data.azurerm_virtual_network.seg-core.id
       remote_vnet_name = data.azurerm_virtual_network.seg-core.name
       remote_rg_name   = "RG-XPESEG-PACORE"
@@ -194,7 +194,7 @@ module "xpe-vneticmsqlmidb-prd" {
 
    peerings = [
      {
-       name             = "to-seg-core"
+       name             = "sailpoint-prd-to-seg-core"
        remote_vnet_id   = data.azurerm_virtual_network.seg-core.id
        remote_vnet_name = data.azurerm_virtual_network.seg-core.name
        remote_rg_name   = "RG-XPESEG-PACORE"
