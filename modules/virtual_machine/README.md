@@ -301,126 +301,106 @@ module "vm_with_script" {
 }
 ```
 
-### Ejemplo 6: Windows Server desde Shared Image Gallery (SIG)
+### Ejemplo 6: Windows Server desde Shared Image Gallery (SIG) - Simple
 
 ```hcl
-module "windows_vm_from_sig" {
+# Variables para el módulo
+variable "vnet_subnet_id" {
+  description = "ID de la subnet donde se desplegará la VM"
+  type        = string
+}
+
+variable "win_admin_username" {
+  description = "Usuario administrador de Windows"
+  type        = string
+  default     = "winadmin"
+}
+
+variable "win_admin_password" {
+  description = "Contraseña del administrador (mín 12 caracteres, mayúsculas, minúsculas, números y símbolos)"
+  type        = string
+  sensitive   = true
+}
+
+variable "sig_image_id" {
+  description = "ID completo de la imagen en Shared Image Gallery"
+  type        = string
+  # Ejemplo: /subscriptions/{sub-id}/resourceGroups/{rg}/providers/Microsoft.Compute/galleries/{gallery}/images/{image-name}/versions/{version}
+}
+
+# Módulo de VM Windows desde SIG
+module "windows_vm_sig" {
   source = "./modules/virtual_machine"
 
-  vm_name             = "vm-win-custom-001"
+  # Básico
+  vm_name             = "vm-win-app-001"
   resource_group_name = "rg-production"
   location            = "eastus"
-  subnet_id           = var.subnet_id
+  subnet_id           = var.vnet_subnet_id
 
-  # Windows Server
+  # Windows
   os_type = "windows"
-  vm_size = "Standard_D4s_v3"
+  vm_size = "Standard_D2s_v3"
 
-  # Imagen personalizada desde Shared Image Gallery
+  # Imagen desde Shared Image Gallery
   use_marketplace_image = false
-  source_image_id       = "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/rg-images/providers/Microsoft.Compute/galleries/myGallery/images/WindowsServer2022-Custom/versions/1.0.0"
+  source_image_id       = var.sig_image_id
 
-  # Autenticación Windows (contraseña requerida)
-  admin_username = "winadmin"
-  admin_password = var.windows_admin_password  # Debe ser sensitive y estar en Key Vault
+  # Autenticación
+  admin_username = var.win_admin_username
+  admin_password = var.win_admin_password
 
-  # Seguridad máxima
-  security_type       = "TrustedLaunch"
-  secure_boot_enabled = true
-  vtpm_enabled        = true
-  encryption_at_host  = true
-
-  # Azure Hybrid Benefit (ahorro de costos si tienes licencias)
-  hybrid_benefit = true
-
-  # Managed Identity para acceso a Azure Key Vault sin contraseñas
-  identity_type = "SystemAssigned"
-
-  # Discos adicionales para aplicaciones
+  # Disco de datos adicional (opcional)
   data_disks = [
     {
       name                 = "datadisk01"
-      disk_size_gb         = 128
+      disk_size_gb         = 100
       storage_account_type = "Premium_LRS"
       caching              = "ReadWrite"
-    },
-    {
-      name                 = "datadisk02"
-      disk_size_gb         = 256
-      storage_account_type = "Premium_LRS"
-      caching              = "ReadOnly"
     }
   ]
 
-  # Configuración de red
-  enable_accelerated_networking = true
-  private_ip_address            = "10.0.1.100"
-
-  # Custom Script Extension para Windows (configuración post-instalación)
-  custom_script_extension = {
-    file_uris = [
-      "https://mystorageaccount.blob.core.windows.net/scripts/Configure-WindowsServer.ps1"
-    ]
-    command_to_execute   = "powershell -ExecutionPolicy Unrestricted -File Configure-WindowsServer.ps1"
-    storage_account_name = "mystorageaccount"
-    storage_account_key  = var.storage_account_key
-  }
-
-  # User data para configuración inicial (codificado en base64 automáticamente)
-  user_data = <<-EOF
-    #ps1_sysnative
-    # Script de inicialización de Windows
-    Install-WindowsFeature -Name Web-Server -IncludeManagementTools
-    Set-TimeZone -Id "Eastern Standard Time"
-    New-Item -Path "C:\Apps" -ItemType Directory -Force
-
-    # Configurar Windows Defender
-    Set-MpPreference -DisableRealtimeMonitoring $false
-    Update-MpSignature
-  EOF
-
+  # Tags obligatorios
   tags = {
     UDN      = "IT"
-    OWNER    = "Infrastructure"
-    xpeowner = "infra@empresa.com"
-    proyecto = "active-directory"
+    OWNER    = "AppTeam"
+    xpeowner = "app-team@empresa.com"
+    proyecto = "aplicaciones"
     ambiente = "produccion"
-    os       = "windows"
-    backup   = "daily"
   }
 }
 
-# Ejemplo de configuración de secrets en Key Vault (recomendado)
-data "azurerm_key_vault_secret" "windows_admin_pwd" {
-  name         = "windows-admin-password"
-  key_vault_id = var.key_vault_id
+# Outputs útiles
+output "vm_id" {
+  value = module.windows_vm_sig.vm_id
 }
 
-variable "windows_admin_password" {
-  description = "Contraseña del administrador Windows"
-  type        = string
-  sensitive   = true
-  default     = null
-
-  # Si no se proporciona, usar Key Vault
-  validation {
-    condition     = var.windows_admin_password != null || data.azurerm_key_vault_secret.windows_admin_pwd.value != null
-    error_message = "Debe proporcionar admin_password o configurar Key Vault."
-  }
+output "private_ip" {
+  value = module.windows_vm_sig.private_ip_address
 }
 ```
 
-**Notas importantes para Windows VMs desde SIG:**
+**Cómo usar este ejemplo:**
 
-1. **Imagen personalizada**: El `source_image_id` debe apuntar a una versión específica en tu Shared Image Gallery
-2. **Generación de imagen**: Si la imagen es Gen2, puedes usar `security_type = "TrustedLaunch"` con vTPM y Secure Boot
-3. **Contraseña obligatoria**: Windows requiere `admin_password` (diferente a Linux con SSH keys)
-4. **Complejidad de contraseña**: Debe cumplir requisitos de Azure (12+ caracteres, mayúsculas, minúsculas, números, símbolos)
-5. **Azure Hybrid Benefit**: Activa `hybrid_benefit = true` si tu imagen personalizada tiene licencias Windows Server/SQL Server
-6. **Custom Script Extension**: Usa PowerShell para configuración post-despliegue
-7. **User data**: Para Windows usa formato `#ps1_sysnative` o `#ps1` al inicio del script
-8. **Sysprep**: Asegúrate de que tu imagen personalizada fue generalizada con `sysprep` antes de capturarla
-9. **Ubicación**: La VM debe estar en la misma región que la Shared Image Gallery (o usar replicación de imágenes)
+```bash
+# 1. Crear archivo terraform.tfvars con tus valores
+cat > terraform.tfvars <<EOF
+vnet_subnet_id    = "/subscriptions/xxx/resourceGroups/rg-network/providers/Microsoft.Network/virtualNetworks/vnet-prod/subnets/subnet-vms"
+sig_image_id      = "/subscriptions/xxx/resourceGroups/rg-images/providers/Microsoft.Compute/galleries/myGallery/images/Win2022-Custom/versions/1.0.0"
+win_admin_username = "winadmin"
+win_admin_password = "P@ssw0rd123!Complex"
+EOF
+
+# 2. Inicializar y aplicar
+terraform init
+terraform plan
+terraform apply
+```
+
+**Notas:**
+- La contraseña debe tener mínimo 12 caracteres con mayúsculas, minúsculas, números y símbolos
+- El `sig_image_id` debe estar en la misma región o tener replicación habilitada
+- La imagen debe estar generalizada con `sysprep` antes de capturarla en SIG
 
 ---
 
