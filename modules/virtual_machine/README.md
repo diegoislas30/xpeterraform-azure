@@ -323,9 +323,16 @@ variable "win_admin_password" {
 }
 
 variable "sig_image_id" {
-  description = "ID completo de la imagen en Shared Image Gallery"
+  description = "ID completo de la imagen en Shared Image Gallery (dejar null para usar Marketplace)"
   type        = string
+  default     = null
   # Ejemplo: /subscriptions/{sub-id}/resourceGroups/{rg}/providers/Microsoft.Compute/galleries/{gallery}/images/{image-name}/versions/{version}
+}
+
+variable "use_trusted_launch" {
+  description = "Habilitar Trusted Launch (vTPM + Secure Boot). Solo compatible con imágenes Gen2. Para SIG, verifica que la imagen fue creada con Gen2 y Trusted Launch."
+  type        = bool
+  default     = false  # false para imágenes personalizadas, true para Marketplace Gen2
 }
 
 # Módulo de VM Windows desde SIG
@@ -342,9 +349,22 @@ module "windows_vm_sig" {
   os_type = "windows"
   vm_size = "Standard_D2s_v3"
 
-  # Imagen desde Shared Image Gallery
-  use_marketplace_image = false
-  source_image_id       = var.sig_image_id
+  # Imagen: SIG o Marketplace (según variable)
+  use_marketplace_image = var.sig_image_id == null ? true : false
+  source_image_id       = var.sig_image_id  # Si es null, usar marketplace_image
+
+  # Imagen de Marketplace (solo si sig_image_id es null)
+  marketplace_image = var.sig_image_id == null ? {
+    publisher = "MicrosoftWindowsServer"
+    offer     = "WindowsServer"
+    sku       = "2022-datacenter-azure-edition-core"
+    version   = "latest"
+  } : null
+
+  # Seguridad: Trusted Launch (solo si es compatible)
+  security_type       = var.use_trusted_launch ? "TrustedLaunch" : "Standard"
+  secure_boot_enabled = var.use_trusted_launch
+  vtpm_enabled        = var.use_trusted_launch
 
   # Autenticación
   admin_username = var.win_admin_username
@@ -383,24 +403,40 @@ output "private_ip" {
 **Cómo usar este ejemplo:**
 
 ```bash
-# 1. Crear archivo terraform.tfvars con tus valores
+# OPCIÓN 1: Usar imagen personalizada desde Shared Image Gallery (SIG)
 cat > terraform.tfvars <<EOF
-vnet_subnet_id    = "/subscriptions/xxx/resourceGroups/rg-network/providers/Microsoft.Network/virtualNetworks/vnet-prod/subnets/subnet-vms"
-sig_image_id      = "/subscriptions/xxx/resourceGroups/rg-images/providers/Microsoft.Compute/galleries/myGallery/images/Win2022-Custom/versions/1.0.0"
+vnet_subnet_id     = "/subscriptions/xxx/resourceGroups/rg-network/providers/Microsoft.Network/virtualNetworks/vnet-prod/subnets/subnet-vms"
+sig_image_id       = "/subscriptions/xxx/resourceGroups/rg-images/providers/Microsoft.Compute/galleries/myGallery/images/Win2022-Custom/versions/1.0.0"
+use_trusted_launch = false  # false si la imagen NO fue creada con Gen2 + Trusted Launch
 win_admin_username = "winadmin"
 win_admin_password = "P@ssw0rd123!Complex"
 EOF
 
-# 2. Inicializar y aplicar
+# OPCIÓN 2: Usar imagen de Marketplace (más segura con Trusted Launch)
+cat > terraform.tfvars <<EOF
+vnet_subnet_id     = "/subscriptions/xxx/resourceGroups/rg-network/providers/Microsoft.Network/virtualNetworks/vnet-prod/subnets/subnet-vms"
+sig_image_id       = null  # null para usar Marketplace
+use_trusted_launch = true  # true para Marketplace Gen2 (recomendado)
+win_admin_username = "winadmin"
+win_admin_password = "P@ssw0rd123!Complex"
+EOF
+
+# Desplegar
 terraform init
 terraform plan
 terraform apply
 ```
 
-**Notas:**
-- La contraseña debe tener mínimo 12 caracteres con mayúsculas, minúsculas, números y símbolos
-- El `sig_image_id` debe estar en la misma región o tener replicación habilitada
-- La imagen debe estar generalizada con `sysprep` antes de capturarla en SIG
+**Notas importantes:**
+
+| Aspecto | Imagen SIG | Imagen Marketplace |
+|---------|------------|-------------------|
+| **Trusted Launch** | ⚠️ Solo si la imagen fue creada con Gen2 + TrustedLaunch | ✅ Compatible (usar `use_trusted_launch = true`) |
+| **Preparación** | Debe estar generalizada con `sysprep` | Lista para usar |
+| **Región** | Debe estar en la misma región o replicada | Disponible en todas las regiones |
+| **Recomendación** | `use_trusted_launch = false` (por defecto) | `use_trusted_launch = true` (más segura) |
+
+**Contraseña:** Debe tener mínimo 12 caracteres con mayúsculas, minúsculas, números y símbolos
 
 ---
 
