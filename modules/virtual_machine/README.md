@@ -301,62 +301,116 @@ module "vm_with_script" {
 }
 ```
 
-### Ejemplo 6: Windows VM desde Shared Image Gallery (SIG)
+### Ejemplo 6: Windows VM desde Shared Image Gallery (SIG) - Completo
 
-**Configuración mínima y directa para despliegue rápido**
+**Configuración lista para producción con NSG, route tables, data disks y seguridad**
+
+Este ejemplo incluye:
+- ✅ VM desde Shared Image Gallery (source_image_id)
+- ✅ Network Security Group (NSG) con reglas
+- ✅ Route Table (opcional)
+- ✅ IP estática o dinámica (DHCP)
+- ✅ Data disks configurables
+- ✅ Encryption at host
+- ✅ Managed Identity
+- ✅ Credenciales desde secretos GitHub
 
 ```hcl
-module "windows_vm_from_sig" {
+# NSG con reglas
+resource "azurerm_network_security_group" "vm_nsg" {
+  name                = "nsg-${var.vm_name}"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+
+  security_rule {
+    name                       = "AllowRDP"
+    priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "3389"
+    source_address_prefix      = "10.0.0.0/8"
+    destination_address_prefix = "*"
+  }
+
+  tags = var.tags
+}
+
+# VM desde SIG
+module "windows_vm" {
   source = "./modules/virtual_machine"
 
-  # Configuración básica
+  # Generales
   vm_name             = "vm-win-app-001"
   resource_group_name = "rg-production"
   location            = "eastus"
-  subnet_id           = "/subscriptions/xxx/resourceGroups/rg-network/providers/Microsoft.Network/virtualNetworks/vnet-prod/subnets/subnet-vms"
 
-  # Windows Server
+  # Windows
   os_type = "windows"
-  vm_size = "Standard_D2s_v3"
+  vm_size = "Standard_D4s_v3"  # 4 vCPUs, 16 GB RAM
 
-  # Imagen desde Shared Image Gallery (SIG)
+  # Imagen SIG (IMPORTANTE: usar security_type = "Standard")
   use_marketplace_image = false
-  source_image_id       = "/subscriptions/xxx/resourceGroups/rg-images/providers/Microsoft.Compute/galleries/myGallery/images/Win2022-Custom/versions/1.0.0"
+  source_image_id       = "/subscriptions/xxx/.../Win2022-Custom/versions/1.0.0"
+  security_type         = "Standard"  # NO usar TrustedLaunch con SIG
 
-  # Credenciales (password viene del secreto VM_PASSWORD en GitHub Actions)
+  # Credenciales desde secreto
   admin_username = "winadmin"
-  admin_password = var.admin_password
+  admin_password = var.admin_password  # Secreto VM_PASSWORD
 
-  # Tags
-  tags = {
-    UDN      = "IT"
-    OWNER    = "AppTeam"
-    xpeowner = "app-team@empresa.com"
-    proyecto = "aplicaciones"
-    ambiente = "produccion"
-  }
+  # Red: IP estática o DHCP
+  subnet_id             = var.subnet_id
+  private_ip_allocation = "Static"  # o "Dynamic" para DHCP
+  private_ip_address    = "10.0.1.10"
+  enable_accelerated_networking = true
+
+  # Discos
+  os_disk_size_gb              = 128
+  os_disk_storage_account_type = "Premium_LRS"
+
+  data_disks = [
+    {
+      lun                  = 0
+      size_gb              = 256
+      caching              = "ReadOnly"
+      storage_account_type = "Premium_LRS"
+    },
+    {
+      lun                  = 1
+      size_gb              = 512
+      caching              = "ReadWrite"
+      storage_account_type = "StandardSSD_LRS"
+    }
+  ]
+
+  # Seguridad
+  encryption_at_host_enabled = true
+  identity_type              = "SystemAssigned"
+  license_type               = "Windows_Server"  # Azure Hybrid Benefit
+
+  tags = var.tags
 }
 
-# Outputs útiles
-output "vm_id" {
-  value = module.windows_vm_from_sig.vm_id
-}
-
-output "private_ip" {
-  value = module.windows_vm_from_sig.private_ip_address
+# Asociar NSG a la NIC
+resource "azurerm_network_interface_security_group_association" "nsg" {
+  network_interface_id      = module.windows_vm.nic_id
+  network_security_group_id = azurerm_network_security_group.vm_nsg.id
 }
 ```
 
-**Cómo obtener el `source_image_id`:**
+**📚 Documentación completa:** Ver [EXAMPLE_WINDOWS_SIG.md](./EXAMPLE_WINDOWS_SIG.md)
 
+**Incluye:**
+- Todas las variables necesarias
+- Ejemplo de terraform.tfvars
+- Configuración de route tables
+- Reglas NSG adicionales
+- Troubleshooting
+- Tamaños de VM recomendados
+
+**Obtener source_image_id:**
 ```bash
-# Listar imágenes en tu Shared Image Gallery
-az sig image-definition list \
-  --resource-group rg-images \
-  --gallery-name myGallery \
-  --output table
-
-# Obtener el ID completo de una versión específica
 az sig image-version show \
   --resource-group rg-images \
   --gallery-name myGallery \
@@ -364,11 +418,6 @@ az sig image-version show \
   --gallery-image-version 1.0.0 \
   --query id -o tsv
 ```
-
-**Para usar con GitHub Actions:**
-- El password se obtiene automáticamente del secreto `VM_PASSWORD`
-- No necesitas configurar nada adicional
-- Solo asegúrate de tener el secreto `VM_PASSWORD` en GitHub
 
 ### 🔧 Opción alternativa: GitHub Secrets (para GitHub Actions)
 
