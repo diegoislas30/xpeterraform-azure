@@ -301,6 +301,130 @@ module "vm_with_script" {
 }
 ```
 
+### Ejemplo 6: Windows Server con todas las características de seguridad
+
+```hcl
+module "windows_vm_production" {
+  source = "./modules/virtual_machine"
+
+  vm_name             = "vm-win-prod-001"
+  resource_group_name = "rg-production"
+  location            = "eastus"
+  subnet_id           = var.subnet_id
+
+  # Windows Server
+  os_type = "windows"
+  vm_size = "Standard_D4s_v3"
+
+  # Imagen de Windows Server 2022
+  use_marketplace_image = true
+  marketplace_image = {
+    publisher = "MicrosoftWindowsServer"
+    offer     = "WindowsServer"
+    sku       = "2022-datacenter-azure-edition"
+    version   = "latest"
+  }
+
+  # Autenticación Windows (contraseña requerida)
+  admin_username = "winadmin"
+  admin_password = var.windows_admin_password  # Debe ser sensitive y estar en Key Vault
+
+  # Seguridad máxima
+  security_type       = "TrustedLaunch"
+  secure_boot_enabled = true
+  vtpm_enabled        = true
+  encryption_at_host  = true
+
+  # Azure Hybrid Benefit (ahorro de costos si tienes licencias)
+  hybrid_benefit = true
+
+  # Managed Identity para acceso a Azure Key Vault sin contraseñas
+  identity_type = "SystemAssigned"
+
+  # Discos adicionales para aplicaciones
+  data_disks = [
+    {
+      name                 = "datadisk01"
+      disk_size_gb         = 128
+      storage_account_type = "Premium_LRS"
+      caching              = "ReadWrite"
+    },
+    {
+      name                 = "datadisk02"
+      disk_size_gb         = 256
+      storage_account_type = "Premium_LRS"
+      caching              = "ReadOnly"
+    }
+  ]
+
+  # Configuración de red
+  enable_accelerated_networking = true
+  private_ip_address            = "10.0.1.100"
+
+  # Custom Script Extension para Windows (configuración post-instalación)
+  custom_script_extension = {
+    file_uris = [
+      "https://mystorageaccount.blob.core.windows.net/scripts/Configure-WindowsServer.ps1"
+    ]
+    command_to_execute   = "powershell -ExecutionPolicy Unrestricted -File Configure-WindowsServer.ps1"
+    storage_account_name = "mystorageaccount"
+    storage_account_key  = var.storage_account_key
+  }
+
+  # User data para configuración inicial (codificado en base64 automáticamente)
+  user_data = <<-EOF
+    #ps1_sysnative
+    # Script de inicialización de Windows
+    Install-WindowsFeature -Name Web-Server -IncludeManagementTools
+    Set-TimeZone -Id "Eastern Standard Time"
+    New-Item -Path "C:\Apps" -ItemType Directory -Force
+
+    # Configurar Windows Defender
+    Set-MpPreference -DisableRealtimeMonitoring $false
+    Update-MpSignature
+  EOF
+
+  tags = {
+    UDN      = "IT"
+    OWNER    = "Infrastructure"
+    xpeowner = "infra@empresa.com"
+    proyecto = "active-directory"
+    ambiente = "produccion"
+    os       = "windows"
+    backup   = "daily"
+  }
+}
+
+# Ejemplo de configuración de secrets en Key Vault (recomendado)
+data "azurerm_key_vault_secret" "windows_admin_pwd" {
+  name         = "windows-admin-password"
+  key_vault_id = var.key_vault_id
+}
+
+variable "windows_admin_password" {
+  description = "Contraseña del administrador Windows"
+  type        = string
+  sensitive   = true
+  default     = null
+
+  # Si no se proporciona, usar Key Vault
+  validation {
+    condition     = var.windows_admin_password != null || data.azurerm_key_vault_secret.windows_admin_pwd.value != null
+    error_message = "Debe proporcionar admin_password o configurar Key Vault."
+  }
+}
+```
+
+**Notas importantes para Windows VMs:**
+
+1. **Contraseña obligatoria**: Windows requiere `admin_password` (diferente a Linux con SSH keys)
+2. **Complejidad de contraseña**: Debe cumplir requisitos de Azure (12+ caracteres, mayúsculas, minúsculas, números, símbolos)
+3. **Azure Hybrid Benefit**: Activa `hybrid_benefit = true` si tienes licencias Windows Server/SQL Server
+4. **Custom Script Extension**: Usa PowerShell en lugar de Bash
+5. **User data**: Para Windows usa formato `#ps1_sysnative` o `#ps1` al inicio del script
+6. **Timezone**: Windows VMs usan UTC por defecto, configura con `Set-TimeZone`
+7. **Storage**: Windows Server 2022 requiere mínimo 32GB de OS disk (el módulo usa 128GB por defecto)
+
 ---
 
 ## 📥 Variables de Entrada
