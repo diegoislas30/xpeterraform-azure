@@ -136,10 +136,7 @@ module "xpe-vneticmsqlmidb-prd" {
         name           = "snet-xpeperfiles-sailtpointqa"
         address_prefix = "172.29.80.160/27"
         service_endpoints = []
-        delegation = {
-          name = "Microsoft.Sql/managedInstances"
-          service_delegation = []
-        }
+        delegation = []
         private_endpoint_network_policies_enabled = false
       }
    ]
@@ -166,10 +163,7 @@ module "vnet-xpeperfiles-sailtpointprd" {
         name           = "snet-xpeperfiles-sailtpointprd"
         address_prefix = "172.29.80.192/27"
         service_endpoints = []
-        delegation = {
-          name = "Microsoft.Sql/managedInstances"
-          service_delegation = []
-        }
+        delegation = []
         private_endpoint_network_policies_enabled = false
       }
    ]
