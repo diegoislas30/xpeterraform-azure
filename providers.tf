@@ -211,3 +211,9 @@ provider "azurerm" {
   features {}
   subscription_id = "5c589577-440f-428c-baeb-bf0999fc3586"
 }
+
+provider "azurerm" {
+  alias           = "xpeperfiles-xcs"
+  features {}
+  subscription_id = "e571034b-f6f9-4ed3-afca-61a671ecba1d"
+}

@@ -92,7 +92,40 @@ module "xpe-vneticmsqlmidb-prd" {
     }
  }
 
- 
+
+ module "rg-scxpesailpointqa" {
+   source = "./modules/resource_group"
+   resource_group_name = "rg-scxpesailpointqa"
+   location            = "southcentralus"
+   tags = {
+     UDN      = "Xpertal"
+     OWNER    = "Felipe Alvarado"
+     xpeowner = "felipe.alvarado@xpertal.com"
+     proyecto = "SailPoint"
+     ambiente = "QA"
+   }
+   providers = {
+     azurerm = azurerm.xpeperfiles-xcs
+   }
+ }
+
+ module "rg-scxpesailpointprd" {
+   source = "./modules/resource_group"
+   resource_group_name = "rg-scxpesailpointprd"
+   location            = "southcentralus"
+   tags = {
+     UDN      = "Xpertal"
+     OWNER    = "Felipe Alvarado"
+     xpeowner = "felipe.alvarado@xpertal.com"
+     proyecto = "SailPoint"
+     ambiente = "Productivo"
+   }
+   providers = {
+     azurerm = azurerm.xpeperfiles-xcs
+   }
+ }
+   
+
 
 
 
