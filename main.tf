@@ -124,10 +124,67 @@ module "xpe-vneticmsqlmidb-prd" {
      azurerm = azurerm.xpeperfiles-xcs
    }
  }
+
+ module "vnet-xpeperfiles-sailtpointqa" {
+   source              = "./modules/vnets"
+   vnet_name           = "vnet-xpeperfiles-sailtpointqa"
+   location            = module.rg-scxpesailpointqa.resource_group_location
+   resource_group_name = module.rg-scxpesailpointqa.resource_group_name
+   address_space       = ["172.29.80.160/27"]
+   subnets = [
+      {
+        name           = "snet-xpeperfiles-sailtpointqa"
+        address_prefix = "172.29.80.160/27"
+        service_endpoints = []
+        delegation = {
+          name = "Microsoft.Sql/managedInstances"
+          service_delegation = []
+        }
+        private_endpoint_network_policies_enabled = false
+      }
+   ]
+   tags = {
+     UDN      = "Xpertal"
+     OWNER    = "Felipe Alvarado"
+     xpeowner = "felipe.alvarado@xpertal.com"
+     proyecto = "SailPoint"
+     ambiente = "QA"
+   }
+   providers = {
+     azurerm = azurerm.xpeperfiles-xcs
+    }
+  }
+
+module "vnet-xpeperfiles-sailtpointprd" {
+   source              = "./modules/vnets"
+   vnet_name           = "vnet-xpeperfiles-sailtpointprd"
+   location            = module.rg-scxpesailpointprd.resource_group_location
+   resource_group_name = module.rg-scxpesailpointprd.resource_group_name
+   address_space       = ["172.29.80.192/27"]
+   subnets = [
+      {
+        name           = "snet-xpeperfiles-sailtpointprd"
+        address_prefix = "172.29.80.192/27"
+        service_endpoints = []
+        delegation = {
+          name = "Microsoft.Sql/managedInstances"
+          service_delegation = []
+        }
+        private_endpoint_network_policies_enabled = false
+      }
+   ]
+   tags = {
+     UDN      = "Xpertal"
+     OWNER    = "Felipe Alvarado"
+     xpeowner = "felipe.alvarado@xpertal.com"
+     proyecto = "SailPoint"
+     ambiente = "Productivo"
+   }
+   providers = {
+     azurerm = azurerm.xpeperfiles-xcs
+    }
+  }
    
-
-
-
 
 
 

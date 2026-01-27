@@ -42,3 +42,34 @@ output "rg-scxpesailpointprd-location" {
   description = "Location del Resource Group"
   value       = module.rg-scxpesailpointprd.resource_group_location
 }
+
+output "vnet-xpeperfiles-sailtpointqa-name" {
+  description = "Nombre del VNet"
+  value       = module.vnet-xpeperfiles-sailtpointqa.vnet_name
+}
+
+output "vnet-xpeperfiles-sailtpointqa-id" {
+  description = "ID del VNet"
+  value       = module.vnet-xpeperfiles-sailtpointqa.vnet_id
+}
+
+output "vnet-xpeperfiles-sailtpointqa-location" {
+  description = "Location del VNet"
+  value       = module.vnet-xpeperfiles-sailtpointqa.vnet_location
+}
+
+output "vnet-xpeperfiles-sailtpointprd-name" {
+  description = "Nombre del VNet"
+  value       = module.vnet-xpeperfiles-sailtpointprd.vnet_name
+}
+
+output "vnet-xpeperfiles-sailtpointprd-id" {
+  description = "ID del VNet"
+  value       = module.vnet-xpeperfiles-sailtpointprd.vnet_id
+}
+
+output "vnet-xpeperfiles-sailtpointprd-location" {
+  description = "Location del VNet"
+  value       = module.vnet-xpeperfiles-sailtpointprd.vnet_location
+}
+
