@@ -47,7 +47,8 @@ module "rg-scxpeicmprd" {
     }
 
     providers = {
-      azurerm = azurerm.Xpertal_XCS
+      azurerm                = azurerm.Xpertal_XCS
+      azurerm.peering_remote = azurerm.Xpertal_XCS
     }
  }
 
@@ -88,7 +89,8 @@ module "xpe-vneticmsqlmidb-prd" {
     }
 
     providers = {
-      azurerm = azurerm.Xpertal_XCS
+      azurerm                = azurerm.Xpertal_XCS
+      azurerm.peering_remote = azurerm.Xpertal_XCS
     }
  }
 
@@ -131,55 +133,98 @@ module "xpe-vneticmsqlmidb-prd" {
    location            = module.rg-scxpesailpointqa.resource_group_location
    resource_group_name = module.rg-scxpesailpointqa.resource_group_name
    address_space       = ["172.29.80.160/27"]
+
    subnets = [
-      {
-        name           = "snet-xpeperfiles-sailtpointqa"
-        address_prefix = "172.29.80.160/27"
-        service_endpoints = []
-        delegation = []
-        private_endpoint_network_policies_enabled = false
+    {
+      name           = "snet-xpeperfiles-sailtpointqa"
+      address_prefix = "172.29.80.160/27"
+    }
+  ]
+
+  peerings = [
+    {
+      name             = "to-seg-core"
+      remote_vnet_id   = data.azurerm_virtual_network.seg-core.id
+      remote_vnet_name = data.azurerm_virtual_network.seg-core.name
+      remote_rg_name   = "RG-XPESEG-PACORE"
+
+      local = {
+        allow_virtual_network_access = true
+        allow_forwarded_traffic      = true
+        allow_gateway_transit        = false
+        use_remote_gateways          = false
       }
-   ]
-   tags = {
-     UDN      = "Xpertal"
-     OWNER    = "Felipe Alvarado"
-     xpeowner = "felipe.alvarado@xpertal.com"
-     proyecto = "SailPoint"
-     ambiente = "QA"
-   }
-   providers = {
-     azurerm = azurerm.xpeperfiles-xcs
+
+      remote = {
+        allow_virtual_network_access = true
+        allow_forwarded_traffic      = true
+        allow_gateway_transit        = false
+        use_remote_gateways          = false
+      }
+    }
+  ]
+
+    tags = {
+      UDN      = "Xpertal"
+      OWNER    = "Felipe Alvarado"
+      xpeowner = "felipe.alvarado@xpertal.com"
+      proyecto = "SailPoint"
+      ambiente = "QA"
+    }
+
+    providers = {
+      azurerm                = azurerm.xpeperfiles-xcs
+      azurerm.peering_remote = azurerm.xpertal_shared_xcs
     }
   }
 
-module "vnet-xpeperfiles-sailtpointprd" {
-   source              = "./modules/vnets"
-   vnet_name           = "vnet-xpeperfiles-sailtpointprd"
-   location            = module.rg-scxpesailpointprd.resource_group_location
-   resource_group_name = module.rg-scxpesailpointprd.resource_group_name
-   address_space       = ["172.29.80.192/27"]
-   subnets = [
-      {
-        name           = "snet-xpeperfiles-sailtpointprd"
-        address_prefix = "172.29.80.192/27"
-        service_endpoints = []
-        delegation = []
-        private_endpoint_network_policies_enabled = false
-      }
+  module "vnet-xpeperfiles-sailtpointprd" {
+    source              = "./modules/vnets"
+    vnet_name           = "vnet-xpeperfiles-sailtpointprd"
+    location            = module.rg-scxpesailpointprd.resource_group_location
+    resource_group_name = module.rg-scxpesailpointprd.resource_group_name
+    address_space       = ["172.29.80.192/27"]
+
+    subnets = [
+     {
+       name           = "snet-xpeperfiles-sailtpointprd"
+       address_prefix = "172.29.80.192/27"
+     }
    ]
-   tags = {
-     UDN      = "Xpertal"
-     OWNER    = "Felipe Alvarado"
-     xpeowner = "felipe.alvarado@xpertal.com"
-     proyecto = "SailPoint"
-     ambiente = "Productivo"
+
+   peerings = [
+     {
+       name             = "to-seg-core"
+       remote_vnet_id   = data.azurerm_virtual_network.seg-core.id
+       remote_vnet_name = data.azurerm_virtual_network.seg-core.name
+       remote_rg_name   = "RG-XPESEG-PACORE"
+
+       local = {
+         allow_virtual_network_access = true
+         allow_forwarded_traffic      = true
+         allow_gateway_transit        = false
+         use_remote_gateways          = false
+       }
+
+       remote = {
+         allow_virtual_network_access = true
+         allow_forwarded_traffic      = true
+         allow_gateway_transit        = false
+         use_remote_gateways          = false
+       }
+     }
+   ]
+
+     tags = {
+       UDN      = "Xpertal"
+       OWNER    = "Felipe Alvarado"
+       xpeowner = "felipe.alvarado@xpertal.com"
+       proyecto = "SailPoint"
+       ambiente = "Productivo"
+     }
+
+     providers = {
+       azurerm                = azurerm.xpeperfiles-xcs
+       azurerm.peering_remote = azurerm.xpertal_shared_xcs
+     }
    }
-   providers = {
-     azurerm = azurerm.xpeperfiles-xcs
-    }
-  }
-   
-
-
-
-
