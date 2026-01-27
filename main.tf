@@ -132,12 +132,12 @@ module "xpe-vneticmsqlmidb-prd" {
    vnet_name           = "vnet-xpeperfiles-sailtpointqa"
    location            = module.rg-scxpesailpointqa.resource_group_location
    resource_group_name = module.rg-scxpesailpointqa.resource_group_name
-   address_space       = ["172.29.80.160/27"]
+   address_space       = ["172.29.67.96/27"]
 
    subnets = [
     {
       name           = "snet-xpeperfiles-sailtpointqa"
-      address_prefix = "172.29.80.160/27"
+      address_prefix = "172.29.67.96/27"
     }
   ]
 
@@ -183,12 +183,12 @@ module "xpe-vneticmsqlmidb-prd" {
     vnet_name           = "vnet-xpeperfiles-sailtpointprd"
     location            = module.rg-scxpesailpointprd.resource_group_location
     resource_group_name = module.rg-scxpesailpointprd.resource_group_name
-    address_space       = ["172.29.80.192/27"]
+    address_space       = ["172.29.67.128/27"]
 
     subnets = [
      {
        name           = "snet-xpeperfiles-sailtpointprd"
-       address_prefix = "172.29.80.192/27"
+       address_prefix = "172.29.67.128/27"
      }
    ]
 
