@@ -55,7 +55,9 @@ resource "azurerm_virtual_network_peering" "local" {
 }
 
 # Remote peering (remota → esta VNet)
+# Usa el provider azurerm.peering_remote para crear el peering en la VNet remota
 resource "azurerm_virtual_network_peering" "remote" {
+  provider                  = azurerm.peering_remote
   for_each                  = { for p in var.peerings : p.name => p }
   name                      = "${each.key}-remote"
   resource_group_name       = each.value.remote_rg_name
