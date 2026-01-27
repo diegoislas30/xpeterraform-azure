@@ -19,6 +19,7 @@ env:
   ARM_CLIENT_ID:     ${{ secrets.AZURE_CLIENT_ID }}
   ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
   ARM_ACCESS_KEY:    ${{ secrets.ARM_ACCESS_KEY }}
+  TF_VAR_admin_password: ${{ secrets.VM_PASSWORD }}
 
 jobs:
   plan:

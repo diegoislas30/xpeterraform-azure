@@ -304,35 +304,38 @@ module "vm_with_script" {
 ### Ejemplo 6: Windows Server desde Shared Image Gallery (SIG) - Simple
 
 ```hcl
-# Variables para el módulo
+# Variables para el módulo (NO sensibles)
 variable "vnet_subnet_id" {
   description = "ID de la subnet donde se desplegará la VM"
   type        = string
-}
-
-variable "win_admin_username" {
-  description = "Usuario administrador de Windows"
-  type        = string
-  default     = "winadmin"
-}
-
-variable "win_admin_password" {
-  description = "Contraseña del administrador (mín 12 caracteres, mayúsculas, minúsculas, números y símbolos)"
-  type        = string
-  sensitive   = true
 }
 
 variable "sig_image_id" {
   description = "ID completo de la imagen en Shared Image Gallery (dejar null para usar Marketplace)"
   type        = string
   default     = null
-  # Ejemplo: /subscriptions/{sub-id}/resourceGroups/{rg}/providers/Microsoft.Compute/galleries/{gallery}/images/{image-name}/versions/{version}
 }
 
 variable "use_trusted_launch" {
-  description = "Habilitar Trusted Launch (vTPM + Secure Boot). Solo compatible con imágenes Gen2. Para SIG, verifica que la imagen fue creada con Gen2 y Trusted Launch."
+  description = "Habilitar Trusted Launch (vTPM + Secure Boot)"
   type        = bool
-  default     = false  # false para imágenes personalizadas, true para Marketplace Gen2
+  default     = false
+}
+
+variable "key_vault_id" {
+  description = "ID del Azure Key Vault donde están almacenadas las credenciales"
+  type        = string
+}
+
+# 🔐 Obtener credenciales desde Azure Key Vault (RECOMENDADO)
+data "azurerm_key_vault_secret" "win_admin_username" {
+  name         = "windows-admin-username"
+  key_vault_id = var.key_vault_id
+}
+
+data "azurerm_key_vault_secret" "win_admin_password" {
+  name         = "windows-admin-password"
+  key_vault_id = var.key_vault_id
 }
 
 # Módulo de VM Windows desde SIG
@@ -366,9 +369,9 @@ module "windows_vm_sig" {
   secure_boot_enabled = var.use_trusted_launch
   vtpm_enabled        = var.use_trusted_launch
 
-  # Autenticación
-  admin_username = var.win_admin_username
-  admin_password = var.win_admin_password
+  # Autenticación desde Key Vault (seguro, sin credenciales en código)
+  admin_username = data.azurerm_key_vault_secret.win_admin_username.value
+  admin_password = data.azurerm_key_vault_secret.win_admin_password.value
 
   # Disco de datos adicional (opcional)
   data_disks = [
@@ -402,30 +405,69 @@ output "private_ip" {
 
 **Cómo usar este ejemplo:**
 
+### 🔐 Paso 1: Almacenar credenciales en Azure Key Vault
+
 ```bash
-# OPCIÓN 1: Usar imagen personalizada desde Shared Image Gallery (SIG)
+# Crear secretos en Key Vault (solo una vez)
+az keyvault secret set \
+  --vault-name "mi-keyvault" \
+  --name "windows-admin-username" \
+  --value "winadmin"
+
+az keyvault secret set \
+  --vault-name "mi-keyvault" \
+  --name "windows-admin-password" \
+  --value "P@ssw0rd123!Complex"
+```
+
+### 📝 Paso 2: Configurar terraform.tfvars (SIN credenciales)
+
+```bash
+# Imagen desde SIG
 cat > terraform.tfvars <<EOF
-vnet_subnet_id     = "/subscriptions/xxx/resourceGroups/rg-network/providers/Microsoft.Network/virtualNetworks/vnet-prod/subnets/subnet-vms"
-sig_image_id       = "/subscriptions/xxx/resourceGroups/rg-images/providers/Microsoft.Compute/galleries/myGallery/images/Win2022-Custom/versions/1.0.0"
-use_trusted_launch = false  # false si la imagen NO fue creada con Gen2 + Trusted Launch
-win_admin_username = "winadmin"
-win_admin_password = "P@ssw0rd123!Complex"
+vnet_subnet_id     = "/subscriptions/xxx/.../vnet-prod/subnets/subnet-vms"
+sig_image_id       = "/subscriptions/xxx/.../Win2022-Custom/versions/1.0.0"
+use_trusted_launch = false
+key_vault_id       = "/subscriptions/xxx/resourceGroups/rg-security/providers/Microsoft.KeyVault/vaults/mi-keyvault"
 EOF
 
-# OPCIÓN 2: Usar imagen de Marketplace (más segura con Trusted Launch)
+# O imagen de Marketplace
 cat > terraform.tfvars <<EOF
-vnet_subnet_id     = "/subscriptions/xxx/resourceGroups/rg-network/providers/Microsoft.Network/virtualNetworks/vnet-prod/subnets/subnet-vms"
-sig_image_id       = null  # null para usar Marketplace
-use_trusted_launch = true  # true para Marketplace Gen2 (recomendado)
-win_admin_username = "winadmin"
-win_admin_password = "P@ssw0rd123!Complex"
+vnet_subnet_id     = "/subscriptions/xxx/.../vnet-prod/subnets/subnet-vms"
+sig_image_id       = null  # null para Marketplace
+use_trusted_launch = true
+key_vault_id       = "/subscriptions/xxx/resourceGroups/rg-security/providers/Microsoft.KeyVault/vaults/mi-keyvault"
 EOF
+```
 
-# Desplegar
+### 🚀 Paso 3: Desplegar
+
+```bash
 terraform init
 terraform plan
 terraform apply
 ```
+
+### 🔧 Opción alternativa: GitHub Secrets (para GitHub Actions)
+
+Si usas GitHub Actions, almacena las credenciales como secretos del repositorio:
+
+**1. Agregar secretos en GitHub:**
+- Ve a: `Settings` → `Secrets and variables` → `Actions` → `New repository secret`
+- Agrega: `WIN_ADMIN_USERNAME` = `winadmin`
+- Agrega: `WIN_ADMIN_PASSWORD` = `P@ssw0rd123!Complex`
+- Agrega: `KEY_VAULT_ID` = `/subscriptions/.../mi-keyvault`
+
+**2. Usar en el workflow `.github/workflows/iac.yml`:**
+
+```yaml
+- name: Terraform Plan
+  env:
+    TF_VAR_key_vault_id: ${{ secrets.KEY_VAULT_ID }}
+  run: terraform plan
+```
+
+**Las credenciales se obtienen de Key Vault automáticamente, no de GitHub Secrets.**
 
 **Notas importantes:**
 
@@ -435,6 +477,20 @@ terraform apply
 | **Preparación** | Debe estar generalizada con `sysprep` | Lista para usar |
 | **Región** | Debe estar en la misma región o replicada | Disponible en todas las regiones |
 | **Recomendación** | `use_trusted_launch = false` (por defecto) | `use_trusted_launch = true` (más segura) |
+
+**🔒 Seguridad de credenciales:**
+
+✅ **CORRECTO (Azure Key Vault):**
+- Credenciales almacenadas en Key Vault
+- Terraform las obtiene en runtime con `data.azurerm_key_vault_secret`
+- NO aparecen en código, logs ni estado de Terraform (están encriptadas)
+- Rotación centralizada de contraseñas
+- Auditoría completa de accesos
+
+❌ **INCORRECTO (hardcoded):**
+- `admin_password = "P@ssw0rd123"` en el código
+- `admin_password = var.win_password` con valor en `.tfvars` (se almacena en Git)
+- Variables de entorno sin encriptar
 
 **Contraseña:** Debe tener mínimo 12 caracteres con mayúsculas, minúsculas, números y símbolos
 
