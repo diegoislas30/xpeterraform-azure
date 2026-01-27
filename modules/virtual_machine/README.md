@@ -301,89 +301,33 @@ module "vm_with_script" {
 }
 ```
 
-### Ejemplo 6: Windows Server desde Shared Image Gallery (SIG) - Simple
+### Ejemplo 6: Windows VM desde Shared Image Gallery (SIG)
+
+**Configuración mínima y directa para despliegue rápido**
 
 ```hcl
-# Variables para el módulo (NO sensibles)
-variable "vnet_subnet_id" {
-  description = "ID de la subnet donde se desplegará la VM"
-  type        = string
-}
-
-variable "sig_image_id" {
-  description = "ID completo de la imagen en Shared Image Gallery (dejar null para usar Marketplace)"
-  type        = string
-  default     = null
-}
-
-variable "use_trusted_launch" {
-  description = "Habilitar Trusted Launch (vTPM + Secure Boot)"
-  type        = bool
-  default     = false
-}
-
-variable "key_vault_id" {
-  description = "ID del Azure Key Vault donde están almacenadas las credenciales"
-  type        = string
-}
-
-# 🔐 Obtener credenciales desde Azure Key Vault (RECOMENDADO)
-data "azurerm_key_vault_secret" "win_admin_username" {
-  name         = "windows-admin-username"
-  key_vault_id = var.key_vault_id
-}
-
-data "azurerm_key_vault_secret" "win_admin_password" {
-  name         = "windows-admin-password"
-  key_vault_id = var.key_vault_id
-}
-
-# Módulo de VM Windows desde SIG
-module "windows_vm_sig" {
+module "windows_vm_from_sig" {
   source = "./modules/virtual_machine"
 
-  # Básico
+  # Configuración básica
   vm_name             = "vm-win-app-001"
   resource_group_name = "rg-production"
   location            = "eastus"
-  subnet_id           = var.vnet_subnet_id
+  subnet_id           = "/subscriptions/xxx/resourceGroups/rg-network/providers/Microsoft.Network/virtualNetworks/vnet-prod/subnets/subnet-vms"
 
-  # Windows
+  # Windows Server
   os_type = "windows"
   vm_size = "Standard_D2s_v3"
 
-  # Imagen: SIG o Marketplace (según variable)
-  use_marketplace_image = var.sig_image_id == null ? true : false
-  source_image_id       = var.sig_image_id  # Si es null, usar marketplace_image
+  # Imagen desde Shared Image Gallery (SIG)
+  use_marketplace_image = false
+  source_image_id       = "/subscriptions/xxx/resourceGroups/rg-images/providers/Microsoft.Compute/galleries/myGallery/images/Win2022-Custom/versions/1.0.0"
 
-  # Imagen de Marketplace (solo si sig_image_id es null)
-  marketplace_image = var.sig_image_id == null ? {
-    publisher = "MicrosoftWindowsServer"
-    offer     = "WindowsServer"
-    sku       = "2022-datacenter-azure-edition-core"
-    version   = "latest"
-  } : null
+  # Credenciales (password viene del secreto VM_PASSWORD en GitHub Actions)
+  admin_username = "winadmin"
+  admin_password = var.admin_password
 
-  # Seguridad: Trusted Launch (solo si es compatible)
-  security_type       = var.use_trusted_launch ? "TrustedLaunch" : "Standard"
-  secure_boot_enabled = var.use_trusted_launch
-  vtpm_enabled        = var.use_trusted_launch
-
-  # Autenticación desde Key Vault (seguro, sin credenciales en código)
-  admin_username = data.azurerm_key_vault_secret.win_admin_username.value
-  admin_password = data.azurerm_key_vault_secret.win_admin_password.value
-
-  # Disco de datos adicional (opcional)
-  data_disks = [
-    {
-      name                 = "datadisk01"
-      disk_size_gb         = 100
-      storage_account_type = "Premium_LRS"
-      caching              = "ReadWrite"
-    }
-  ]
-
-  # Tags obligatorios
+  # Tags
   tags = {
     UDN      = "IT"
     OWNER    = "AppTeam"
@@ -395,58 +339,36 @@ module "windows_vm_sig" {
 
 # Outputs útiles
 output "vm_id" {
-  value = module.windows_vm_sig.vm_id
+  value = module.windows_vm_from_sig.vm_id
 }
 
 output "private_ip" {
-  value = module.windows_vm_sig.private_ip_address
+  value = module.windows_vm_from_sig.private_ip_address
 }
 ```
 
-**Cómo usar este ejemplo:**
-
-### 🔐 Paso 1: Almacenar credenciales en Azure Key Vault
+**Cómo obtener el `source_image_id`:**
 
 ```bash
-# Crear secretos en Key Vault (solo una vez)
-az keyvault secret set \
-  --vault-name "mi-keyvault" \
-  --name "windows-admin-username" \
-  --value "winadmin"
+# Listar imágenes en tu Shared Image Gallery
+az sig image-definition list \
+  --resource-group rg-images \
+  --gallery-name myGallery \
+  --output table
 
-az keyvault secret set \
-  --vault-name "mi-keyvault" \
-  --name "windows-admin-password" \
-  --value "P@ssw0rd123!Complex"
+# Obtener el ID completo de una versión específica
+az sig image-version show \
+  --resource-group rg-images \
+  --gallery-name myGallery \
+  --gallery-image-definition Win2022-Custom \
+  --gallery-image-version 1.0.0 \
+  --query id -o tsv
 ```
 
-### 📝 Paso 2: Configurar terraform.tfvars (SIN credenciales)
-
-```bash
-# Imagen desde SIG
-cat > terraform.tfvars <<EOF
-vnet_subnet_id     = "/subscriptions/xxx/.../vnet-prod/subnets/subnet-vms"
-sig_image_id       = "/subscriptions/xxx/.../Win2022-Custom/versions/1.0.0"
-use_trusted_launch = false
-key_vault_id       = "/subscriptions/xxx/resourceGroups/rg-security/providers/Microsoft.KeyVault/vaults/mi-keyvault"
-EOF
-
-# O imagen de Marketplace
-cat > terraform.tfvars <<EOF
-vnet_subnet_id     = "/subscriptions/xxx/.../vnet-prod/subnets/subnet-vms"
-sig_image_id       = null  # null para Marketplace
-use_trusted_launch = true
-key_vault_id       = "/subscriptions/xxx/resourceGroups/rg-security/providers/Microsoft.KeyVault/vaults/mi-keyvault"
-EOF
-```
-
-### 🚀 Paso 3: Desplegar
-
-```bash
-terraform init
-terraform plan
-terraform apply
-```
+**Para usar con GitHub Actions:**
+- El password se obtiene automáticamente del secreto `VM_PASSWORD`
+- No necesitas configurar nada adicional
+- Solo asegúrate de tener el secreto `VM_PASSWORD` en GitHub
 
 ### 🔧 Opción alternativa: GitHub Secrets (para GitHub Actions)
 
