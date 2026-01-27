@@ -301,151 +301,122 @@ module "vm_with_script" {
 }
 ```
 
-### Ejemplo 6: Windows Server desde Shared Image Gallery (SIG) - Simple
+### Ejemplo 6: Windows VM desde Shared Image Gallery (SIG) - Completo
+
+**Configuración lista para producción con NSG, route tables, data disks y seguridad**
+
+Este ejemplo incluye:
+- ✅ VM desde Shared Image Gallery (source_image_id)
+- ✅ Network Security Group (NSG) con reglas
+- ✅ Route Table (opcional)
+- ✅ IP estática o dinámica (DHCP)
+- ✅ Data disks configurables
+- ✅ Encryption at host
+- ✅ Managed Identity
+- ✅ Credenciales desde secretos GitHub
 
 ```hcl
-# Variables para el módulo (NO sensibles)
-variable "vnet_subnet_id" {
-  description = "ID de la subnet donde se desplegará la VM"
-  type        = string
+# NSG con reglas
+resource "azurerm_network_security_group" "vm_nsg" {
+  name                = "nsg-${var.vm_name}"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+
+  security_rule {
+    name                       = "AllowRDP"
+    priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "3389"
+    source_address_prefix      = "10.0.0.0/8"
+    destination_address_prefix = "*"
+  }
+
+  tags = var.tags
 }
 
-variable "sig_image_id" {
-  description = "ID completo de la imagen en Shared Image Gallery (dejar null para usar Marketplace)"
-  type        = string
-  default     = null
-}
-
-variable "use_trusted_launch" {
-  description = "Habilitar Trusted Launch (vTPM + Secure Boot)"
-  type        = bool
-  default     = false
-}
-
-variable "key_vault_id" {
-  description = "ID del Azure Key Vault donde están almacenadas las credenciales"
-  type        = string
-}
-
-# 🔐 Obtener credenciales desde Azure Key Vault (RECOMENDADO)
-data "azurerm_key_vault_secret" "win_admin_username" {
-  name         = "windows-admin-username"
-  key_vault_id = var.key_vault_id
-}
-
-data "azurerm_key_vault_secret" "win_admin_password" {
-  name         = "windows-admin-password"
-  key_vault_id = var.key_vault_id
-}
-
-# Módulo de VM Windows desde SIG
-module "windows_vm_sig" {
+# VM desde SIG
+module "windows_vm" {
   source = "./modules/virtual_machine"
 
-  # Básico
+  # Generales
   vm_name             = "vm-win-app-001"
   resource_group_name = "rg-production"
   location            = "eastus"
-  subnet_id           = var.vnet_subnet_id
 
   # Windows
   os_type = "windows"
-  vm_size = "Standard_D2s_v3"
+  vm_size = "Standard_D4s_v3"  # 4 vCPUs, 16 GB RAM
 
-  # Imagen: SIG o Marketplace (según variable)
-  use_marketplace_image = var.sig_image_id == null ? true : false
-  source_image_id       = var.sig_image_id  # Si es null, usar marketplace_image
+  # Imagen SIG (IMPORTANTE: usar security_type = "Standard")
+  use_marketplace_image = false
+  source_image_id       = "/subscriptions/xxx/.../Win2022-Custom/versions/1.0.0"
+  security_type         = "Standard"  # NO usar TrustedLaunch con SIG
 
-  # Imagen de Marketplace (solo si sig_image_id es null)
-  marketplace_image = var.sig_image_id == null ? {
-    publisher = "MicrosoftWindowsServer"
-    offer     = "WindowsServer"
-    sku       = "2022-datacenter-azure-edition-core"
-    version   = "latest"
-  } : null
+  # Credenciales desde secreto
+  admin_username = "winadmin"
+  admin_password = var.admin_password  # Secreto VM_PASSWORD
 
-  # Seguridad: Trusted Launch (solo si es compatible)
-  security_type       = var.use_trusted_launch ? "TrustedLaunch" : "Standard"
-  secure_boot_enabled = var.use_trusted_launch
-  vtpm_enabled        = var.use_trusted_launch
+  # Red: IP estática o DHCP
+  subnet_id             = var.subnet_id
+  private_ip_allocation = "Static"  # o "Dynamic" para DHCP
+  private_ip_address    = "10.0.1.10"
+  enable_accelerated_networking = true
 
-  # Autenticación desde Key Vault (seguro, sin credenciales en código)
-  admin_username = data.azurerm_key_vault_secret.win_admin_username.value
-  admin_password = data.azurerm_key_vault_secret.win_admin_password.value
+  # Discos
+  os_disk_size_gb              = 128
+  os_disk_storage_account_type = "Premium_LRS"
 
-  # Disco de datos adicional (opcional)
   data_disks = [
     {
-      name                 = "datadisk01"
-      disk_size_gb         = 100
+      lun                  = 0
+      size_gb              = 256
+      caching              = "ReadOnly"
       storage_account_type = "Premium_LRS"
+    },
+    {
+      lun                  = 1
+      size_gb              = 512
       caching              = "ReadWrite"
+      storage_account_type = "StandardSSD_LRS"
     }
   ]
 
-  # Tags obligatorios
-  tags = {
-    UDN      = "IT"
-    OWNER    = "AppTeam"
-    xpeowner = "app-team@empresa.com"
-    proyecto = "aplicaciones"
-    ambiente = "produccion"
-  }
+  # Seguridad
+  encryption_at_host_enabled = true
+  identity_type              = "SystemAssigned"
+  license_type               = "Windows_Server"  # Azure Hybrid Benefit
+
+  tags = var.tags
 }
 
-# Outputs útiles
-output "vm_id" {
-  value = module.windows_vm_sig.vm_id
-}
-
-output "private_ip" {
-  value = module.windows_vm_sig.private_ip_address
+# Asociar NSG a la NIC
+resource "azurerm_network_interface_security_group_association" "nsg" {
+  network_interface_id      = module.windows_vm.nic_id
+  network_security_group_id = azurerm_network_security_group.vm_nsg.id
 }
 ```
 
-**Cómo usar este ejemplo:**
+**📚 Documentación completa:** Ver [EXAMPLE_WINDOWS_SIG.md](./EXAMPLE_WINDOWS_SIG.md)
 
-### 🔐 Paso 1: Almacenar credenciales en Azure Key Vault
+**Incluye:**
+- Todas las variables necesarias
+- Ejemplo de terraform.tfvars
+- Configuración de route tables
+- Reglas NSG adicionales
+- Troubleshooting
+- Tamaños de VM recomendados
 
+**Obtener source_image_id:**
 ```bash
-# Crear secretos en Key Vault (solo una vez)
-az keyvault secret set \
-  --vault-name "mi-keyvault" \
-  --name "windows-admin-username" \
-  --value "winadmin"
-
-az keyvault secret set \
-  --vault-name "mi-keyvault" \
-  --name "windows-admin-password" \
-  --value "P@ssw0rd123!Complex"
-```
-
-### 📝 Paso 2: Configurar terraform.tfvars (SIN credenciales)
-
-```bash
-# Imagen desde SIG
-cat > terraform.tfvars <<EOF
-vnet_subnet_id     = "/subscriptions/xxx/.../vnet-prod/subnets/subnet-vms"
-sig_image_id       = "/subscriptions/xxx/.../Win2022-Custom/versions/1.0.0"
-use_trusted_launch = false
-key_vault_id       = "/subscriptions/xxx/resourceGroups/rg-security/providers/Microsoft.KeyVault/vaults/mi-keyvault"
-EOF
-
-# O imagen de Marketplace
-cat > terraform.tfvars <<EOF
-vnet_subnet_id     = "/subscriptions/xxx/.../vnet-prod/subnets/subnet-vms"
-sig_image_id       = null  # null para Marketplace
-use_trusted_launch = true
-key_vault_id       = "/subscriptions/xxx/resourceGroups/rg-security/providers/Microsoft.KeyVault/vaults/mi-keyvault"
-EOF
-```
-
-### 🚀 Paso 3: Desplegar
-
-```bash
-terraform init
-terraform plan
-terraform apply
+az sig image-version show \
+  --resource-group rg-images \
+  --gallery-name myGallery \
+  --gallery-image-definition Win2022-Custom \
+  --gallery-image-version 1.0.0 \
+  --query id -o tsv
 ```
 
 ### 🔧 Opción alternativa: GitHub Secrets (para GitHub Actions)
