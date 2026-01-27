@@ -301,13 +301,13 @@ module "vm_with_script" {
 }
 ```
 
-### Ejemplo 6: Windows Server con todas las características de seguridad
+### Ejemplo 6: Windows Server desde Shared Image Gallery (SIG)
 
 ```hcl
-module "windows_vm_production" {
+module "windows_vm_from_sig" {
   source = "./modules/virtual_machine"
 
-  vm_name             = "vm-win-prod-001"
+  vm_name             = "vm-win-custom-001"
   resource_group_name = "rg-production"
   location            = "eastus"
   subnet_id           = var.subnet_id
@@ -316,14 +316,9 @@ module "windows_vm_production" {
   os_type = "windows"
   vm_size = "Standard_D4s_v3"
 
-  # Imagen de Windows Server 2022
-  use_marketplace_image = true
-  marketplace_image = {
-    publisher = "MicrosoftWindowsServer"
-    offer     = "WindowsServer"
-    sku       = "2022-datacenter-azure-edition"
-    version   = "latest"
-  }
+  # Imagen personalizada desde Shared Image Gallery
+  use_marketplace_image = false
+  source_image_id       = "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/rg-images/providers/Microsoft.Compute/galleries/myGallery/images/WindowsServer2022-Custom/versions/1.0.0"
 
   # Autenticación Windows (contraseña requerida)
   admin_username = "winadmin"
@@ -415,15 +410,17 @@ variable "windows_admin_password" {
 }
 ```
 
-**Notas importantes para Windows VMs:**
+**Notas importantes para Windows VMs desde SIG:**
 
-1. **Contraseña obligatoria**: Windows requiere `admin_password` (diferente a Linux con SSH keys)
-2. **Complejidad de contraseña**: Debe cumplir requisitos de Azure (12+ caracteres, mayúsculas, minúsculas, números, símbolos)
-3. **Azure Hybrid Benefit**: Activa `hybrid_benefit = true` si tienes licencias Windows Server/SQL Server
-4. **Custom Script Extension**: Usa PowerShell en lugar de Bash
-5. **User data**: Para Windows usa formato `#ps1_sysnative` o `#ps1` al inicio del script
-6. **Timezone**: Windows VMs usan UTC por defecto, configura con `Set-TimeZone`
-7. **Storage**: Windows Server 2022 requiere mínimo 32GB de OS disk (el módulo usa 128GB por defecto)
+1. **Imagen personalizada**: El `source_image_id` debe apuntar a una versión específica en tu Shared Image Gallery
+2. **Generación de imagen**: Si la imagen es Gen2, puedes usar `security_type = "TrustedLaunch"` con vTPM y Secure Boot
+3. **Contraseña obligatoria**: Windows requiere `admin_password` (diferente a Linux con SSH keys)
+4. **Complejidad de contraseña**: Debe cumplir requisitos de Azure (12+ caracteres, mayúsculas, minúsculas, números, símbolos)
+5. **Azure Hybrid Benefit**: Activa `hybrid_benefit = true` si tu imagen personalizada tiene licencias Windows Server/SQL Server
+6. **Custom Script Extension**: Usa PowerShell para configuración post-despliegue
+7. **User data**: Para Windows usa formato `#ps1_sysnative` o `#ps1` al inicio del script
+8. **Sysprep**: Asegúrate de que tu imagen personalizada fue generalizada con `sysprep` antes de capturarla
+9. **Ubicación**: La VM debe estar en la misma región que la Shared Image Gallery (o usar replicación de imágenes)
 
 ---
 
