@@ -3,7 +3,7 @@ resource "azurerm_route_table" "this" {
   location            = var.location
   resource_group_name = var.resource_group_name
 
-  tags = tomap(variable.tags)
+  tags = var.tags
 }
 
 resource "azurerm_route" "this" {

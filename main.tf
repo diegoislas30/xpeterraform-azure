@@ -628,3 +628,101 @@ resource "azurerm_security_center_subscription_pricing" "defender-servers" {
 
   provider = azurerm.xpeperfiles-xcs
 }
+
+# =============================================================================
+# Route Tables para SailPoint
+# =============================================================================
+
+# Route Table para SailPoint QA
+module "rt-xpeperfiles-sailpointqa" {
+  source              = "./modules/route_table"
+  rt_name             = "rt-xpeperfiles-sailpointqa"
+  resource_group_name = module.rg-scxpesailpointqa.resource_group_name
+  location            = module.rg-scxpesailpointqa.resource_group_location
+
+  routes = [
+    {
+      name                   = "rt-vnet2dnsresolv"
+      address_prefix         = "172.29.99.4/32"
+      next_hop_type          = "VirtualAppliance"
+      next_hop_in_ip_address = "172.29.97.4"
+    },
+    {
+      name                   = "RedXpertal"
+      address_prefix         = "10.0.0.0/8"
+      next_hop_type          = "VirtualAppliance"
+      next_hop_in_ip_address = "172.29.97.4"
+    },
+    {
+      name                   = "RedDCAZ"
+      address_prefix         = "172.29.104.0/21"
+      next_hop_type          = "VirtualAppliance"
+      next_hop_in_ip_address = "172.29.97.4"
+    }
+  ]
+
+  tags = {
+    UDN      = "Xpertal"
+    OWNER    = "Felipe Alvarado"
+    xpeowner = "felipe.alvarado@xpertal.com"
+    proyecto = "SailPoint"
+    ambiente = "QA"
+  }
+
+  providers = {
+    azurerm = azurerm.xpeperfiles-xcs
+  }
+}
+
+# Route Table para SailPoint PRD
+module "rt-xpeperfiles-sailpointprd" {
+  source              = "./modules/route_table"
+  rt_name             = "rt-xpeperfiles-sailpointprd"
+  resource_group_name = module.rg-scxpesailpointprd.resource_group_name
+  location            = module.rg-scxpesailpointprd.resource_group_location
+
+  routes = [
+    {
+      name                   = "rt-vnet2dnsresolv"
+      address_prefix         = "172.29.99.4/32"
+      next_hop_type          = "VirtualAppliance"
+      next_hop_in_ip_address = "172.29.97.4"
+    },
+    {
+      name                   = "RedXpertal"
+      address_prefix         = "10.0.0.0/8"
+      next_hop_type          = "VirtualAppliance"
+      next_hop_in_ip_address = "172.29.97.4"
+    },
+    {
+      name                   = "RedDCAZ"
+      address_prefix         = "172.29.104.0/21"
+      next_hop_type          = "VirtualAppliance"
+      next_hop_in_ip_address = "172.29.97.4"
+    }
+  ]
+
+  tags = {
+    UDN      = "Xpertal"
+    OWNER    = "Felipe Alvarado"
+    xpeowner = "felipe.alvarado@xpertal.com"
+    proyecto = "SailPoint"
+    ambiente = "Productivo"
+  }
+
+  providers = {
+    azurerm = azurerm.xpeperfiles-xcs
+  }
+}
+
+# Asociación de Route Table a Subnet QA
+resource "azurerm_subnet_route_table_association" "sailpoint-qa" {
+  subnet_id      = module.vnet-xpeperfiles-sailtpointqa.subnet_ids["snet-xpeperfiles-sailtpointqa"]
+  route_table_id = module.rt-xpeperfiles-sailpointqa.rt_id
+}
+
+# Asociación de Route Table a Subnet PRD
+resource "azurerm_subnet_route_table_association" "sailpoint-prd" {
+  subnet_id      = module.vnet-xpeperfiles-sailtpointprd.subnet_ids["snet-xpeperfiles-sailtpointprd"]
+  route_table_id = module.rt-xpeperfiles-sailpointprd.rt_id
+}
