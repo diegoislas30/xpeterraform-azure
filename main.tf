@@ -306,6 +306,7 @@ module "vmscxpeazureqa01" {
   admin_username      = var.admin_username
   admin_password      = var.admin_password
   os_disk_size_gb     = 128
+  disable_password_authentication = false
 
   tags = {
     UDN      = "Xpertal"
@@ -332,6 +333,7 @@ module "vmscxpeiqserviceqa01" {
   admin_username      = var.admin_username
   admin_password      = var.admin_password
   os_disk_size_gb     = 50
+  disable_password_authentication = false
 
   tags = {
     UDN      = "Xpertal"
@@ -358,6 +360,7 @@ module "vmscxpevaqa01" {
   admin_username      = var.admin_username
   admin_password      = var.admin_password
   os_disk_size_gb     = 128
+  disable_password_authentication = false
 
   tags = {
     UDN      = "Xpertal"
@@ -388,6 +391,7 @@ module "vmscxpeazureprd01" {
   admin_username      = var.admin_username
   admin_password      = var.admin_password
   os_disk_size_gb     = 128
+  disable_password_authentication = false
 
   tags = {
     UDN      = "Xpertal"
@@ -414,6 +418,7 @@ module "vmscxpeiqserviceprd01" {
   admin_username      = var.admin_username
   admin_password      = var.admin_password
   os_disk_size_gb     = 250
+  disable_password_authentication = false
 
   tags = {
     UDN      = "Xpertal"
@@ -440,6 +445,7 @@ module "vmscxpevaprd01" {
   admin_username      = var.admin_username
   admin_password      = var.admin_password
   os_disk_size_gb     = 128
+  disable_password_authentication = false
 
   tags = {
     UDN      = "Xpertal"
