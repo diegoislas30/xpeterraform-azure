@@ -471,3 +471,147 @@ module "vmscxpevaprd01" {
     azurerm = azurerm.xpeperfiles-xcs
   }
 }
+
+# =============================================================================
+# Azure Backup - Recovery Services Vaults y Políticas
+# =============================================================================
+
+# Recovery Services Vault para QA
+resource "azurerm_recovery_services_vault" "sailpoint-qa" {
+  name                = "rsv-xpeperfiles-sailpointqa"
+  location            = module.rg-scxpesailpointqa.resource_group_location
+  resource_group_name = module.rg-scxpesailpointqa.resource_group_name
+  sku                 = "Standard"
+  soft_delete_enabled = true
+
+  tags = {
+    UDN      = "Xpertal"
+    OWNER    = "Felipe Alvarado"
+    xpeowner = "felipe.alvarado@xpertal.com"
+    proyecto = "SailPoint"
+    ambiente = "QA"
+  }
+
+  provider = azurerm.xpeperfiles-xcs
+}
+
+# Recovery Services Vault para PRD
+resource "azurerm_recovery_services_vault" "sailpoint-prd" {
+  name                = "rsv-xpeperfiles-sailpointprd"
+  location            = module.rg-scxpesailpointprd.resource_group_location
+  resource_group_name = module.rg-scxpesailpointprd.resource_group_name
+  sku                 = "Standard"
+  soft_delete_enabled = true
+
+  tags = {
+    UDN      = "Xpertal"
+    OWNER    = "Felipe Alvarado"
+    xpeowner = "felipe.alvarado@xpertal.com"
+    proyecto = "SailPoint"
+    ambiente = "Productivo"
+  }
+
+  provider = azurerm.xpeperfiles-xcs
+}
+
+# Política de Backup QA - Diario con retención 30 días
+resource "azurerm_backup_policy_vm" "sailpoint-qa" {
+  name                = "policy-vm-daily-30days-qa"
+  resource_group_name = module.rg-scxpesailpointqa.resource_group_name
+  recovery_vault_name = azurerm_recovery_services_vault.sailpoint-qa.name
+
+  timezone = "Central Standard Time"
+
+  backup {
+    frequency = "Daily"
+    time      = "02:00"
+  }
+
+  retention_daily {
+    count = 30
+  }
+
+  provider = azurerm.xpeperfiles-xcs
+}
+
+# Política de Backup PRD - Diario con retención 30 días
+resource "azurerm_backup_policy_vm" "sailpoint-prd" {
+  name                = "policy-vm-daily-30days-prd"
+  resource_group_name = module.rg-scxpesailpointprd.resource_group_name
+  recovery_vault_name = azurerm_recovery_services_vault.sailpoint-prd.name
+
+  timezone = "Central Standard Time"
+
+  backup {
+    frequency = "Daily"
+    time      = "02:00"
+  }
+
+  retention_daily {
+    count = 30
+  }
+
+  provider = azurerm.xpeperfiles-xcs
+}
+
+# =============================================================================
+# Backup Protection - VMs QA
+# =============================================================================
+
+resource "azurerm_backup_protected_vm" "vmscxpeazureqa01" {
+  resource_group_name = module.rg-scxpesailpointqa.resource_group_name
+  recovery_vault_name = azurerm_recovery_services_vault.sailpoint-qa.name
+  source_vm_id        = module.vmscxpeazureqa01.vm_id
+  backup_policy_id    = azurerm_backup_policy_vm.sailpoint-qa.id
+
+  provider = azurerm.xpeperfiles-xcs
+}
+
+resource "azurerm_backup_protected_vm" "vmscxpeiqserviceqa01" {
+  resource_group_name = module.rg-scxpesailpointqa.resource_group_name
+  recovery_vault_name = azurerm_recovery_services_vault.sailpoint-qa.name
+  source_vm_id        = module.vmscxpeiqserviceqa01.vm_id
+  backup_policy_id    = azurerm_backup_policy_vm.sailpoint-qa.id
+
+  provider = azurerm.xpeperfiles-xcs
+}
+
+resource "azurerm_backup_protected_vm" "vmscxpevaqa01" {
+  resource_group_name = module.rg-scxpesailpointqa.resource_group_name
+  recovery_vault_name = azurerm_recovery_services_vault.sailpoint-qa.name
+  source_vm_id        = module.vmscxpevaqa01.vm_id
+  backup_policy_id    = azurerm_backup_policy_vm.sailpoint-qa.id
+
+  provider = azurerm.xpeperfiles-xcs
+}
+
+# =============================================================================
+# Backup Protection - VMs PRD
+# =============================================================================
+
+resource "azurerm_backup_protected_vm" "vmscxpeazureprd01" {
+  resource_group_name = module.rg-scxpesailpointprd.resource_group_name
+  recovery_vault_name = azurerm_recovery_services_vault.sailpoint-prd.name
+  source_vm_id        = module.vmscxpeazureprd01.vm_id
+  backup_policy_id    = azurerm_backup_policy_vm.sailpoint-prd.id
+
+  provider = azurerm.xpeperfiles-xcs
+}
+
+resource "azurerm_backup_protected_vm" "vmscxpeiqserviceprd01" {
+  resource_group_name = module.rg-scxpesailpointprd.resource_group_name
+  recovery_vault_name = azurerm_recovery_services_vault.sailpoint-prd.name
+  source_vm_id        = module.vmscxpeiqserviceprd01.vm_id
+  backup_policy_id    = azurerm_backup_policy_vm.sailpoint-prd.id
+
+  provider = azurerm.xpeperfiles-xcs
+}
+
+resource "azurerm_backup_protected_vm" "vmscxpevaprd01" {
+  resource_group_name = module.rg-scxpesailpointprd.resource_group_name
+  recovery_vault_name = azurerm_recovery_services_vault.sailpoint-prd.name
+  source_vm_id        = module.vmscxpevaprd01.vm_id
+  backup_policy_id    = azurerm_backup_policy_vm.sailpoint-prd.id
+
+  provider = azurerm.xpeperfiles-xcs
+}
