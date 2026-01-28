@@ -289,3 +289,167 @@ resource "azurerm_subnet_network_security_group_association" "sailpoint-prd" {
   subnet_id                 = module.vnet-xpeperfiles-sailtpointprd.subnet_ids["snet-xpeperfiles-sailtpointprd"]
   network_security_group_id = data.azurerm_network_security_group.nsg-sailpoint-prd.id
 }
+
+# =============================================================================
+# VMs SailPoint QA - Windows Server 2022 desde Shared Image Gallery
+# =============================================================================
+
+module "vmscxpeazureqa01" {
+  source              = "./modules/virtual_machine"
+  vm_name             = "vmscxpeazureqa01"
+  resource_group_name = module.rg-scxpesailpointqa.resource_group_name
+  location            = module.rg-scxpesailpointqa.resource_group_location
+  subnet_id           = module.vnet-xpeperfiles-sailtpointqa.subnet_ids["snet-xpeperfiles-sailtpointqa"]
+  os_type             = "windows"
+  vm_size             = "Standard_D8s_v5"
+  source_image_id     = data.azurerm_shared_image_version.windows2022.id
+  admin_username      = var.admin_username
+  admin_password      = var.admin_password
+  os_disk_size_gb     = 128
+
+  tags = {
+    UDN      = "Xpertal"
+    OWNER    = "Felipe Alvarado"
+    xpeowner = "felipe.alvarado@xpertal.com"
+    proyecto = "SailPoint"
+    ambiente = "QA"
+  }
+
+  providers = {
+    azurerm = azurerm.xpeperfiles-xcs
+  }
+}
+
+module "vmscxpeiqserviceqa01" {
+  source              = "./modules/virtual_machine"
+  vm_name             = "vmscxpeiqserviceqa01"
+  resource_group_name = module.rg-scxpesailpointqa.resource_group_name
+  location            = module.rg-scxpesailpointqa.resource_group_location
+  subnet_id           = module.vnet-xpeperfiles-sailtpointqa.subnet_ids["snet-xpeperfiles-sailtpointqa"]
+  os_type             = "windows"
+  vm_size             = "Standard_D2_v5"
+  source_image_id     = data.azurerm_shared_image_version.windows2022.id
+  admin_username      = var.admin_username
+  admin_password      = var.admin_password
+  os_disk_size_gb     = 50
+
+  tags = {
+    UDN      = "Xpertal"
+    OWNER    = "Felipe Alvarado"
+    xpeowner = "felipe.alvarado@xpertal.com"
+    proyecto = "SailPoint"
+    ambiente = "QA"
+  }
+
+  providers = {
+    azurerm = azurerm.xpeperfiles-xcs
+  }
+}
+
+module "vmscxpevaqa01" {
+  source              = "./modules/virtual_machine"
+  vm_name             = "vmscxpevaqa01"
+  resource_group_name = module.rg-scxpesailpointqa.resource_group_name
+  location            = module.rg-scxpesailpointqa.resource_group_location
+  subnet_id           = module.vnet-xpeperfiles-sailtpointqa.subnet_ids["snet-xpeperfiles-sailtpointqa"]
+  os_type             = "windows"
+  vm_size             = "Standard_D8s_v5"
+  source_image_id     = data.azurerm_shared_image_version.windows2022.id
+  admin_username      = var.admin_username
+  admin_password      = var.admin_password
+  os_disk_size_gb     = 128
+
+  tags = {
+    UDN      = "Xpertal"
+    OWNER    = "Felipe Alvarado"
+    xpeowner = "felipe.alvarado@xpertal.com"
+    proyecto = "SailPoint"
+    ambiente = "QA"
+  }
+
+  providers = {
+    azurerm = azurerm.xpeperfiles-xcs
+  }
+}
+
+# =============================================================================
+# VMs SailPoint PRD - Windows Server 2022 desde Shared Image Gallery
+# =============================================================================
+
+module "vmscxpeazureprd01" {
+  source              = "./modules/virtual_machine"
+  vm_name             = "vmscxpeazureprd01"
+  resource_group_name = module.rg-scxpesailpointprd.resource_group_name
+  location            = module.rg-scxpesailpointprd.resource_group_location
+  subnet_id           = module.vnet-xpeperfiles-sailtpointprd.subnet_ids["snet-xpeperfiles-sailtpointprd"]
+  os_type             = "windows"
+  vm_size             = "Standard_D8s_v5"
+  source_image_id     = data.azurerm_shared_image_version.windows2022.id
+  admin_username      = var.admin_username
+  admin_password      = var.admin_password
+  os_disk_size_gb     = 128
+
+  tags = {
+    UDN      = "Xpertal"
+    OWNER    = "Felipe Alvarado"
+    xpeowner = "felipe.alvarado@xpertal.com"
+    proyecto = "SailPoint"
+    ambiente = "Productivo"
+  }
+
+  providers = {
+    azurerm = azurerm.xpeperfiles-xcs
+  }
+}
+
+module "vmscxpeiqserviceprd01" {
+  source              = "./modules/virtual_machine"
+  vm_name             = "vmscxpeiqserviceprd01"
+  resource_group_name = module.rg-scxpesailpointprd.resource_group_name
+  location            = module.rg-scxpesailpointprd.resource_group_location
+  subnet_id           = module.vnet-xpeperfiles-sailtpointprd.subnet_ids["snet-xpeperfiles-sailtpointprd"]
+  os_type             = "windows"
+  vm_size             = "Standard_D4d_v5"
+  source_image_id     = data.azurerm_shared_image_version.windows2022.id
+  admin_username      = var.admin_username
+  admin_password      = var.admin_password
+  os_disk_size_gb     = 250
+
+  tags = {
+    UDN      = "Xpertal"
+    OWNER    = "Felipe Alvarado"
+    xpeowner = "felipe.alvarado@xpertal.com"
+    proyecto = "SailPoint"
+    ambiente = "Productivo"
+  }
+
+  providers = {
+    azurerm = azurerm.xpeperfiles-xcs
+  }
+}
+
+module "vmscxpevaprd01" {
+  source              = "./modules/virtual_machine"
+  vm_name             = "vmscxpevaprd01"
+  resource_group_name = module.rg-scxpesailpointprd.resource_group_name
+  location            = module.rg-scxpesailpointprd.resource_group_location
+  subnet_id           = module.vnet-xpeperfiles-sailtpointprd.subnet_ids["snet-xpeperfiles-sailtpointprd"]
+  os_type             = "windows"
+  vm_size             = "Standard_D8s_v5"
+  source_image_id     = data.azurerm_shared_image_version.windows2022.id
+  admin_username      = var.admin_username
+  admin_password      = var.admin_password
+  os_disk_size_gb     = 128
+
+  tags = {
+    UDN      = "Xpertal"
+    OWNER    = "Felipe Alvarado"
+    xpeowner = "felipe.alvarado@xpertal.com"
+    proyecto = "SailPoint"
+    ambiente = "Productivo"
+  }
+
+  providers = {
+    azurerm = azurerm.xpeperfiles-xcs
+  }
+}

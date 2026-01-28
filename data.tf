@@ -18,3 +18,12 @@ data "azurerm_template_spec_version" "nsgxcs" {
   version             = "v2.0"
   provider            = azurerm.xpertal_shared_xcs
 }
+
+# Imagen Windows Server 2022 desde Shared Image Gallery
+data "azurerm_shared_image_version" "windows2022" {
+  name                = "1.0.0"
+  image_name          = "Windows_2022"
+  gallery_name        = "XpertalSharedImageWindows"
+  resource_group_name = "rg-ImageTemplate_Xpertal"
+  provider            = azurerm.xpertal_shared_xcs
+}
