@@ -335,7 +335,7 @@ module "vmscxpeiqserviceqa01" {
   source_image_id     = data.azurerm_shared_image_version.windows2022.id
   admin_username      = var.admin_username
   admin_password      = var.admin_password
-  os_disk_size_gb     = 50
+  os_disk_size_gb     = 128
   security_type       = "Standard"
   disable_password_authentication = false
 
