@@ -27,3 +27,10 @@ data "azurerm_shared_image_version" "windows2022" {
   resource_group_name = "rg-ImageTemplate_Xpertal"
   provider            = azurerm.xpertal_shared_xcs
 }
+
+# Route Table existente para POC - ExpressRoute
+data "azurerm_route_table" "rt-er2poc-test" {
+  name                = "rt-er2poc-test"
+  resource_group_name = "rg-xpeseg-test"
+  provider            = azurerm.xpertal_shared_xcs
+}

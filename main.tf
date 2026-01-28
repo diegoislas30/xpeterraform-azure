@@ -738,3 +738,32 @@ resource "azurerm_subnet_route_table_association" "sailpoint-prd" {
   subnet_id      = module.vnet-xpeperfiles-sailtpointprd.subnet_ids["snet-xpeperfiles-sailtpointprd"]
   route_table_id = module.rt-xpeperfiles-sailpointprd.rt_id
 }
+
+# =============================================================================
+# Rutas adicionales en rt-er2poc-test (Route Table existente)
+# Para alcanzar las VNets de SailPoint desde ExpressRoute
+# =============================================================================
+
+# Ruta hacia VNet SailPoint QA (172.29.67.96/27)
+resource "azurerm_route" "rt2LANCloud46" {
+  name                   = "rt2LANCloud46"
+  resource_group_name    = "rg-xpeseg-test"
+  route_table_name       = data.azurerm_route_table.rt-er2poc-test.name
+  address_prefix         = "172.29.67.96/27"
+  next_hop_type          = "VirtualAppliance"
+  next_hop_in_ip_address = "172.29.97.116"
+
+  provider = azurerm.xpertal_shared_xcs
+}
+
+# Ruta hacia VNet SailPoint PRD (172.29.67.128/27)
+resource "azurerm_route" "rt2LANCloud47" {
+  name                   = "rt2LANCloud47"
+  resource_group_name    = "rg-xpeseg-test"
+  route_table_name       = data.azurerm_route_table.rt-er2poc-test.name
+  address_prefix         = "172.29.67.128/27"
+  next_hop_type          = "VirtualAppliance"
+  next_hop_in_ip_address = "172.29.97.116"
+
+  provider = azurerm.xpertal_shared_xcs
+}
