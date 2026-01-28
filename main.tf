@@ -615,3 +615,16 @@ resource "azurerm_backup_protected_vm" "vmscxpevaprd01" {
 
   provider = azurerm.xpeperfiles-xcs
 }
+
+# =============================================================================
+# Microsoft Defender for Cloud - Servers Plan 2
+# =============================================================================
+
+# Habilitar Defender for Servers Plan 2 en la suscripción
+resource "azurerm_security_center_subscription_pricing" "defender-servers" {
+  tier          = "Standard"
+  resource_type = "VirtualMachines"
+  subplan       = "P2"
+
+  provider = azurerm.xpeperfiles-xcs
+}
