@@ -642,6 +642,12 @@ module "rt-xpeperfiles-sailpointqa" {
 
   routes = [
     {
+      name                   = "DefaultRoute"
+      address_prefix         = "0.0.0.0/0"
+      next_hop_type          = "VirtualAppliance"
+      next_hop_in_ip_address = "172.29.97.4"
+    },
+    {
       name                   = "rt-vnet2dnsresolv"
       address_prefix         = "172.29.99.4/32"
       next_hop_type          = "VirtualAppliance"
@@ -682,6 +688,12 @@ module "rt-xpeperfiles-sailpointprd" {
   location            = module.rg-scxpesailpointprd.resource_group_location
 
   routes = [
+    {
+      name                   = "DefaultRoute"
+      address_prefix         = "0.0.0.0/0"
+      next_hop_type          = "VirtualAppliance"
+      next_hop_in_ip_address = "172.29.97.4"
+    },
     {
       name                   = "rt-vnet2dnsresolv"
       address_prefix         = "172.29.99.4/32"
