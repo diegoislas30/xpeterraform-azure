@@ -228,3 +228,64 @@ module "xpe-vneticmsqlmidb-prd" {
        azurerm.peering_remote = azurerm.xpertal_shared_xcs
      }
    }
+
+# =============================================================================
+# NSGs para SailPoint - Desplegados desde Template Spec
+# =============================================================================
+
+# NSG para SailPoint QA
+resource "azurerm_resource_group_template_deployment" "nsg-sailpoint-qa" {
+  name                = "nsg-xpeperfiles-sailtpointqa-deployment"
+  resource_group_name = module.rg-scxpesailpointqa.resource_group_name
+  deployment_mode     = "Incremental"
+  template_content    = data.azurerm_template_spec_version.nsgxcs.template_body
+
+  parameters_content = jsonencode({
+    nsg_name = { value = "nsg-xpeperfiles-sailtpointqa" }
+  })
+
+  provider = azurerm.xpeperfiles-xcs
+}
+
+# NSG para SailPoint PRD
+resource "azurerm_resource_group_template_deployment" "nsg-sailpoint-prd" {
+  name                = "nsg-xpeperfiles-sailtpointprd-deployment"
+  resource_group_name = module.rg-scxpesailpointprd.resource_group_name
+  deployment_mode     = "Incremental"
+  template_content    = data.azurerm_template_spec_version.nsgxcs.template_body
+
+  parameters_content = jsonencode({
+    nsg_name = { value = "nsg-xpeperfiles-sailtpointprd" }
+  })
+
+  provider = azurerm.xpeperfiles-xcs
+}
+
+# Data sources para obtener los NSGs creados por el template
+data "azurerm_network_security_group" "nsg-sailpoint-qa" {
+  name                = "nsg-xpeperfiles-sailtpointqa"
+  resource_group_name = module.rg-scxpesailpointqa.resource_group_name
+  provider            = azurerm.xpeperfiles-xcs
+
+  depends_on = [azurerm_resource_group_template_deployment.nsg-sailpoint-qa]
+}
+
+data "azurerm_network_security_group" "nsg-sailpoint-prd" {
+  name                = "nsg-xpeperfiles-sailtpointprd"
+  resource_group_name = module.rg-scxpesailpointprd.resource_group_name
+  provider            = azurerm.xpeperfiles-xcs
+
+  depends_on = [azurerm_resource_group_template_deployment.nsg-sailpoint-prd]
+}
+
+# Asociación de NSG a Subnet QA
+resource "azurerm_subnet_network_security_group_association" "sailpoint-qa" {
+  subnet_id                 = module.vnet-xpeperfiles-sailtpointqa.subnet_ids["snet-xpeperfiles-sailtpointqa"]
+  network_security_group_id = data.azurerm_network_security_group.nsg-sailpoint-qa.id
+}
+
+# Asociación de NSG a Subnet PRD
+resource "azurerm_subnet_network_security_group_association" "sailpoint-prd" {
+  subnet_id                 = module.vnet-xpeperfiles-sailtpointprd.subnet_ids["snet-xpeperfiles-sailtpointprd"]
+  network_security_group_id = data.azurerm_network_security_group.nsg-sailpoint-prd.id
+}
