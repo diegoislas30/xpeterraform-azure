@@ -297,6 +297,7 @@ resource "azurerm_subnet_network_security_group_association" "sailpoint-prd" {
 module "vmscxpeazureqa01" {
   source              = "./modules/virtual_machine"
   vm_name             = "vmscxpeazureqa01"
+  computer_name       = "vmscazureqa01"
   resource_group_name = module.rg-scxpesailpointqa.resource_group_name
   location            = module.rg-scxpesailpointqa.resource_group_location
   subnet_id           = module.vnet-xpeperfiles-sailtpointqa.subnet_ids["snet-xpeperfiles-sailtpointqa"]
@@ -306,6 +307,7 @@ module "vmscxpeazureqa01" {
   admin_username      = var.admin_username
   admin_password      = var.admin_password
   os_disk_size_gb     = 128
+  security_type       = "Standard"
   disable_password_authentication = false
 
   tags = {
@@ -324,6 +326,7 @@ module "vmscxpeazureqa01" {
 module "vmscxpeiqserviceqa01" {
   source              = "./modules/virtual_machine"
   vm_name             = "vmscxpeiqserviceqa01"
+  computer_name       = "vmsciqsvcqa01"
   resource_group_name = module.rg-scxpesailpointqa.resource_group_name
   location            = module.rg-scxpesailpointqa.resource_group_location
   subnet_id           = module.vnet-xpeperfiles-sailtpointqa.subnet_ids["snet-xpeperfiles-sailtpointqa"]
@@ -333,6 +336,7 @@ module "vmscxpeiqserviceqa01" {
   admin_username      = var.admin_username
   admin_password      = var.admin_password
   os_disk_size_gb     = 50
+  security_type       = "Standard"
   disable_password_authentication = false
 
   tags = {
@@ -351,6 +355,7 @@ module "vmscxpeiqserviceqa01" {
 module "vmscxpevaqa01" {
   source              = "./modules/virtual_machine"
   vm_name             = "vmscxpevaqa01"
+  computer_name       = "vmscvaqa01"
   resource_group_name = module.rg-scxpesailpointqa.resource_group_name
   location            = module.rg-scxpesailpointqa.resource_group_location
   subnet_id           = module.vnet-xpeperfiles-sailtpointqa.subnet_ids["snet-xpeperfiles-sailtpointqa"]
@@ -360,6 +365,7 @@ module "vmscxpevaqa01" {
   admin_username      = var.admin_username
   admin_password      = var.admin_password
   os_disk_size_gb     = 128
+  security_type       = "Standard"
   disable_password_authentication = false
 
   tags = {
@@ -382,6 +388,7 @@ module "vmscxpevaqa01" {
 module "vmscxpeazureprd01" {
   source              = "./modules/virtual_machine"
   vm_name             = "vmscxpeazureprd01"
+  computer_name       = "vmscazureprd01"
   resource_group_name = module.rg-scxpesailpointprd.resource_group_name
   location            = module.rg-scxpesailpointprd.resource_group_location
   subnet_id           = module.vnet-xpeperfiles-sailtpointprd.subnet_ids["snet-xpeperfiles-sailtpointprd"]
@@ -391,6 +398,7 @@ module "vmscxpeazureprd01" {
   admin_username      = var.admin_username
   admin_password      = var.admin_password
   os_disk_size_gb     = 128
+  security_type       = "Standard"
   disable_password_authentication = false
 
   tags = {
@@ -409,6 +417,7 @@ module "vmscxpeazureprd01" {
 module "vmscxpeiqserviceprd01" {
   source              = "./modules/virtual_machine"
   vm_name             = "vmscxpeiqserviceprd01"
+  computer_name       = "vmsciqsvcprd01"
   resource_group_name = module.rg-scxpesailpointprd.resource_group_name
   location            = module.rg-scxpesailpointprd.resource_group_location
   subnet_id           = module.vnet-xpeperfiles-sailtpointprd.subnet_ids["snet-xpeperfiles-sailtpointprd"]
@@ -418,6 +427,7 @@ module "vmscxpeiqserviceprd01" {
   admin_username      = var.admin_username
   admin_password      = var.admin_password
   os_disk_size_gb     = 250
+  security_type       = "Standard"
   disable_password_authentication = false
 
   tags = {
@@ -436,6 +446,7 @@ module "vmscxpeiqserviceprd01" {
 module "vmscxpevaprd01" {
   source              = "./modules/virtual_machine"
   vm_name             = "vmscxpevaprd01"
+  computer_name       = "vmscvaprd01"
   resource_group_name = module.rg-scxpesailpointprd.resource_group_name
   location            = module.rg-scxpesailpointprd.resource_group_location
   subnet_id           = module.vnet-xpeperfiles-sailtpointprd.subnet_ids["snet-xpeperfiles-sailtpointprd"]
@@ -445,6 +456,7 @@ module "vmscxpevaprd01" {
   admin_username      = var.admin_username
   admin_password      = var.admin_password
   os_disk_size_gb     = 128
+  security_type       = "Standard"
   disable_password_authentication = false
 
   tags = {

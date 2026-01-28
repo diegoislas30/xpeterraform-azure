@@ -160,6 +160,7 @@ resource "azurerm_linux_virtual_machine" "this" {
 resource "azurerm_windows_virtual_machine" "this" {
   count                 = lower(var.os_type) == "windows" ? 1 : 0
   name                  = var.vm_name
+  computer_name         = coalesce(var.computer_name, var.vm_name)
   resource_group_name   = var.resource_group_name
   location              = var.location
   size                  = var.vm_size

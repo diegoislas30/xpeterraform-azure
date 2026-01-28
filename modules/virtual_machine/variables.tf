@@ -3,6 +3,12 @@ variable "vm_name" {
   type        = string
 }
 
+variable "computer_name" {
+  description = "Nombre del equipo (hostname). Máximo 15 caracteres para Windows. Si no se especifica, usa vm_name."
+  type        = string
+  default     = null
+}
+
 variable "resource_group_name" {
   description = "Nombre del Resource Group."
   type        = string
