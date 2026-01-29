@@ -643,14 +643,14 @@ module "rt-xpeperfiles-sailpointqa" {
 
   routes = [
     {
-      name                   = "DefaultRoute"
+      name                   = "DefaultInternet"
       address_prefix         = "0.0.0.0/0"
       next_hop_type          = "VirtualAppliance"
       next_hop_in_ip_address = "172.29.97.4"
     },
     {
-      name                   = "rt-vnet2dnsresolv"
-      address_prefix         = "172.29.99.4/32"
+      name                   = "RedDCAZ"
+      address_prefix         = "172.29.104.0/21"
       next_hop_type          = "VirtualAppliance"
       next_hop_in_ip_address = "172.29.97.4"
     },
@@ -661,8 +661,56 @@ module "rt-xpeperfiles-sailpointqa" {
       next_hop_in_ip_address = "172.29.97.4"
     },
     {
-      name                   = "RedDCAZ"
-      address_prefix         = "172.29.104.0/21"
+      name                   = "rt-lanDMZcomunitaria"
+      address_prefix         = "192.168.198.0/24"
+      next_hop_type          = "VirtualAppliance"
+      next_hop_in_ip_address = "172.29.97.4"
+    },
+    {
+      name                   = "rt-lanHCM"
+      address_prefix         = "172.29.49.0/24"
+      next_hop_type          = "VirtualAppliance"
+      next_hop_in_ip_address = "172.29.97.4"
+    },
+    {
+      name                   = "rt-lanHCM_dev"
+      address_prefix         = "172.29.56.0/24"
+      next_hop_type          = "VirtualAppliance"
+      next_hop_in_ip_address = "172.29.97.4"
+    },
+    {
+      name                   = "rt-lanHCM_prd"
+      address_prefix         = "172.29.50.0/24"
+      next_hop_type          = "VirtualAppliance"
+      next_hop_in_ip_address = "172.29.97.4"
+    },
+    {
+      name                   = "rt-lanPTM_prd"
+      address_prefix         = "172.29.112.0/27"
+      next_hop_type          = "VirtualAppliance"
+      next_hop_in_ip_address = "172.29.97.4"
+    },
+    {
+      name                   = "rt-vnet2dnsresolv"
+      address_prefix         = "172.29.99.4/32"
+      next_hop_type          = "VirtualAppliance"
+      next_hop_in_ip_address = "172.29.97.4"
+    },
+    {
+      name                   = "rt_lanvnetintegrationICM"
+      address_prefix         = "172.29.67.32/27"
+      next_hop_type          = "VirtualAppliance"
+      next_hop_in_ip_address = "172.29.97.4"
+    },
+    {
+      name                   = "rt_svr_CSCMSSFTP"
+      address_prefix         = "192.168.198.66/32"
+      next_hop_type          = "VirtualAppliance"
+      next_hop_in_ip_address = "172.29.97.4"
+    },
+    {
+      name                   = "rttovnetimbera"
+      address_prefix         = "172.29.63.0/26"
       next_hop_type          = "VirtualAppliance"
       next_hop_in_ip_address = "172.29.97.4"
     }
@@ -690,14 +738,14 @@ module "rt-xpeperfiles-sailpointprd" {
 
   routes = [
     {
-      name                   = "DefaultRoute"
+      name                   = "DefaultInternet"
       address_prefix         = "0.0.0.0/0"
       next_hop_type          = "VirtualAppliance"
       next_hop_in_ip_address = "172.29.97.4"
     },
     {
-      name                   = "rt-vnet2dnsresolv"
-      address_prefix         = "172.29.99.4/32"
+      name                   = "RedDCAZ"
+      address_prefix         = "172.29.104.0/21"
       next_hop_type          = "VirtualAppliance"
       next_hop_in_ip_address = "172.29.97.4"
     },
@@ -708,8 +756,56 @@ module "rt-xpeperfiles-sailpointprd" {
       next_hop_in_ip_address = "172.29.97.4"
     },
     {
-      name                   = "RedDCAZ"
-      address_prefix         = "172.29.104.0/21"
+      name                   = "rt-lanDMZcomunitaria"
+      address_prefix         = "192.168.198.0/24"
+      next_hop_type          = "VirtualAppliance"
+      next_hop_in_ip_address = "172.29.97.4"
+    },
+    {
+      name                   = "rt-lanHCM"
+      address_prefix         = "172.29.49.0/24"
+      next_hop_type          = "VirtualAppliance"
+      next_hop_in_ip_address = "172.29.97.4"
+    },
+    {
+      name                   = "rt-lanHCM_dev"
+      address_prefix         = "172.29.56.0/24"
+      next_hop_type          = "VirtualAppliance"
+      next_hop_in_ip_address = "172.29.97.4"
+    },
+    {
+      name                   = "rt-lanHCM_prd"
+      address_prefix         = "172.29.50.0/24"
+      next_hop_type          = "VirtualAppliance"
+      next_hop_in_ip_address = "172.29.97.4"
+    },
+    {
+      name                   = "rt-lanPTM_prd"
+      address_prefix         = "172.29.112.0/27"
+      next_hop_type          = "VirtualAppliance"
+      next_hop_in_ip_address = "172.29.97.4"
+    },
+    {
+      name                   = "rt-vnet2dnsresolv"
+      address_prefix         = "172.29.99.4/32"
+      next_hop_type          = "VirtualAppliance"
+      next_hop_in_ip_address = "172.29.97.4"
+    },
+    {
+      name                   = "rt_lanvnetintegrationICM"
+      address_prefix         = "172.29.67.32/27"
+      next_hop_type          = "VirtualAppliance"
+      next_hop_in_ip_address = "172.29.97.4"
+    },
+    {
+      name                   = "rt_svr_CSCMSSFTP"
+      address_prefix         = "192.168.198.66/32"
+      next_hop_type          = "VirtualAppliance"
+      next_hop_in_ip_address = "172.29.97.4"
+    },
+    {
+      name                   = "rttovnetimbera"
+      address_prefix         = "172.29.63.0/26"
       next_hop_type          = "VirtualAppliance"
       next_hop_in_ip_address = "172.29.97.4"
     }
@@ -768,55 +864,6 @@ resource "azurerm_route" "rt2LANCloud47" {
 
   provider = azurerm.xpertal_shared_xcs
 }
-
-module "nsg-sailpoint-qa" {
-  source              = "./modules/network_security_group"
-  nsg_name            = "nsg-sailpoint-qa"
-  resource_group_name = module.rg-scxpesailpointqa.resource_group_name
-  location            = module.rg-scxpesailpointqa.resource_group_location
-
-  security_rules = [
-    {
-      name                       = "JumpServer"
-      priority                   = 100
-      direction                  = "Inbound"
-      access                     = "Allow"
-      protocol                   = "Tcp"
-      source_port_range          = "*"
-      destination_port_ranges    = ["135", "445", "139", "3389", "22", "49154"]
-      source_address_prefixes    = ["10.50.32.108", "10.50.32.109"]
-      destination_address_prefix = "*"
-    },
-    {
-      name                       = "JumpServer-2"
-      priority                   = 120
-      direction                  = "Inbound"
-      access                     = "Allow"
-      protocol                   = "*"
-      source_port_range          = "*"
-      destination_port_ranges    = ["22", "23", "3389"]
-      source_address_prefixes    = ["10.50.4.141", "10.50.4.142"]
-      destination_address_prefix = "*"
-    }
-  ]
-
-  tags = {
-    UDN      = "Xpertal"
-    OWNER    = "Felipe Alvarado"
-    xpeowner = "felipe.alvarado@xpertal.com"
-    proyecto = "SailPoint"
-    ambiente = "QA"
-  }
-
-  providers = {
-    azurerm = azurerm.xpeperfiles-xcs
-  }
-}
-
-
-
-
-
 
 # =============================================================================
 # Recursos para SailPoint FIN
