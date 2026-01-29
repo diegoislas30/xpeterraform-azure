@@ -794,7 +794,7 @@ module "nsg-sailpoint-qa" {
       access                     = "Allow"
       protocol                   = "*"
       source_port_range          = "*"
-      destination_port_ranges    = ["22", "23"]
+      destination_port_ranges    = ["22", "23", "3389"]
       source_address_prefixes    = ["10.50.4.141", "10.50.4.142"]
       destination_address_prefix = "*"
     }
