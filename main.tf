@@ -94,6 +94,10 @@ module "xpe-vneticmsqlmidb-prd" {
     }
  }
 
+# ======================================================
+# Recursos para SailPoint INICIO
+# ======================================================
+
 
  module "rg-scxpesailpointqa" {
    source = "./modules/resource_group"
@@ -229,9 +233,6 @@ module "xpe-vneticmsqlmidb-prd" {
      }
    }
 
-# =============================================================================
-# Recursos para SailPoint INICIO
-# =============================================================================
 
 # NSG para SailPoint QA
 resource "azurerm_resource_group_template_deployment" "nsg-sailpoint-qa" {
@@ -769,6 +770,6 @@ resource "azurerm_route" "rt2LANCloud47" {
 }
 
 # =============================================================================
-# Recursos para ICM FIN
+# Recursos para SailPoint FIN
 # =============================================================================
 
