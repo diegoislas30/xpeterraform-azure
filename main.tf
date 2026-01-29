@@ -786,7 +786,7 @@ module "nsg-sailpoint-qa" {
       destination_port_range     = "135, 445, 139, 3389, 22, 49154"
       source_address_prefix      = "10.50.32.108, 10.50.32.109"
       destination_address_prefix = "*"
-    }
+    },
     {
       name                       = "JumpServer-2"
       priority                   = 120
