@@ -783,8 +783,8 @@ module "nsg-sailpoint-qa" {
       access                     = "Allow"
       protocol                   = "Tcp"
       source_port_range          = "*"
-      destination_port_range     = "135, 445, 139, 3389, 22, 49154"
-      source_address_prefix      = "10.50.32.108, 10.50.32.109"
+      destination_port_ranges    = ["135", "445", "139", "3389", "22", "49154"]
+      source_address_prefixes    = ["10.50.32.108", "10.50.32.109"]
       destination_address_prefix = "*"
     },
     {
@@ -794,11 +794,10 @@ module "nsg-sailpoint-qa" {
       access                     = "Allow"
       protocol                   = "*"
       source_port_range          = "*"
-      destination_port_range     = "22, 23"
-      source_address_prefix      = "10.50.4.141, 10.50.4.142"
+      destination_port_ranges    = ["22", "23"]
+      source_address_prefixes    = ["10.50.4.141", "10.50.4.142"]
       destination_address_prefix = "*"
     }
-
   ]
 
   tags = {
