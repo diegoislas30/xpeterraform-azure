@@ -769,6 +769,56 @@ resource "azurerm_route" "rt2LANCloud47" {
   provider = azurerm.xpertal_shared_xcs
 }
 
+module "nsg-sailpoint-qa" {
+  source              = "./modules/network_security_group"
+  nsg_name            = "nsg-sailpoint-qa"
+  resource_group_name = module.rg-scxpesailpointqa.resource_group_name
+  location            = module.rg-scxpesailpointqa.resource_group_location
+
+  security_rules = [
+    {
+      name                       = "JumpServer"
+      priority                   = 100
+      direction                  = "Inbound"
+      access                     = "Allow"
+      protocol                   = "Tcp"
+      source_port_range          = "*"
+      destination_port_range     = "135, 445, 139, 3389, 22, 49154"
+      source_address_prefix      = "10.50.32.108, 10.50.32.109"
+      destination_address_prefix = "*"
+    }
+    {
+      name                       = "JumpServer-2"
+      priority                   = 120
+      direction                  = "Inbound"
+      access                     = "Allow"
+      protocol                   = "*"
+      source_port_range          = "*"
+      destination_port_range     = "22, 23"
+      source_address_prefix      = "10.50.4.141, 10.50.4.142"
+      destination_address_prefix = "*"
+    }
+
+  ]
+
+  tags = {
+    UDN      = "Xpertal"
+    OWNER    = "Felipe Alvarado"
+    xpeowner = "felipe.alvarado@xpertal.com"
+    proyecto = "SailPoint"
+    ambiente = "QA"
+  }
+
+  providers = {
+    azurerm = azurerm.xpeperfiles-xcs
+  }
+}
+
+
+
+
+
+
 # =============================================================================
 # Recursos para SailPoint FIN
 # =============================================================================
