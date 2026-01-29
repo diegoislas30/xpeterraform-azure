@@ -230,7 +230,7 @@ module "xpe-vneticmsqlmidb-prd" {
    }
 
 # =============================================================================
-# NSGs para SailPoint - Desplegados desde Template Spec
+# Recursos para SailPoint INICIO
 # =============================================================================
 
 # NSG para SailPoint QA
@@ -767,3 +767,8 @@ resource "azurerm_route" "rt2LANCloud47" {
 
   provider = azurerm.xpertal_shared_xcs
 }
+
+# =============================================================================
+# Recursos para ICM FIN
+# =============================================================================
+
