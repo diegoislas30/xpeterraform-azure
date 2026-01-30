@@ -368,6 +368,16 @@ module "vmscxpevaqa01" {
   os_disk_size_gb     = 128
   security_type       = "Standard"
   disable_password_authentication = false
+  encryption_at_host_enabled      = true
+
+  data_disks = [
+    {
+      lun                  = 0
+      size_gb              = 100
+      caching              = "ReadWrite"
+      storage_account_type = "Premium_LRS"
+    }
+  ]
 
   tags = {
     UDN      = "Xpertal"
@@ -459,6 +469,16 @@ module "vmscxpevaprd01" {
   os_disk_size_gb     = 128
   security_type       = "Standard"
   disable_password_authentication = false
+  encryption_at_host_enabled      = true
+
+  data_disks = [
+    {
+      lun                  = 0
+      size_gb              = 100
+      caching              = "ReadWrite"
+      storage_account_type = "Premium_LRS"
+    }
+  ]
 
   tags = {
     UDN      = "Xpertal"
