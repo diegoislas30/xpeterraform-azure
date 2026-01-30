@@ -139,6 +139,7 @@ module "xpe-vneticmsqlmidb-prd" {
    location            = module.rg-scxpesailpointqa.resource_group_location
    resource_group_name = module.rg-scxpesailpointqa.resource_group_name
    address_space       = ["172.29.67.96/27"]
+   dns_servers         = ["10.50.16.79", "10.50.16.101"]
 
    subnets = [
     {
@@ -190,6 +191,7 @@ module "xpe-vneticmsqlmidb-prd" {
     location            = module.rg-scxpesailpointprd.resource_group_location
     resource_group_name = module.rg-scxpesailpointprd.resource_group_name
     address_space       = ["172.29.67.128/27"]
+    dns_servers         = ["10.50.16.79", "10.50.16.101"]
 
     subnets = [
      {

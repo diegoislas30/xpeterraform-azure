@@ -63,6 +63,12 @@ variable "peerings" {
 }
 
 
+variable "dns_servers" {
+  description = "Lista de servidores DNS para la VNet"
+  type        = list(string)
+  default     = []
+}
+
 variable "tags" {
   description = "Etiquetas a aplicar"
   type = object({
