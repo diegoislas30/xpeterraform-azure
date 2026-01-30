@@ -279,12 +279,6 @@ data "azurerm_network_security_group" "nsg-sailpoint-prd" {
   depends_on = [azurerm_resource_group_template_deployment.nsg-sailpoint-prd]
 }
 
-# Import para sincronizar estado de la asociación NSG-Subnet QA (recurso ya existe en Azure)
-import {
-  to = azurerm_subnet_network_security_group_association.sailpoint-qa
-  id = "/subscriptions/e571034b-f6f9-4ed3-afca-61a671ecba1d/resourceGroups/rg-scxpesailpointqa/providers/Microsoft.Network/virtualNetworks/vnet-xpeperfiles-sailtpointqa/subnets/snet-xpeperfiles-sailtpointqa"
-}
-
 # Asociación de NSG a Subnet QA
 resource "azurerm_subnet_network_security_group_association" "sailpoint-qa" {
   subnet_id                 = module.vnet-xpeperfiles-sailtpointqa.subnet_ids["snet-xpeperfiles-sailtpointqa"]
