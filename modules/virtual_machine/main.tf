@@ -166,9 +166,10 @@ resource "azurerm_windows_virtual_machine" "this" {
   size                  = var.vm_size
   admin_username        = var.admin_username
   admin_password        = var.admin_password
-  provision_vm_agent    = true
-  network_interface_ids = [azurerm_network_interface.this.id]
-  zone                  = var.zone
+  provision_vm_agent                = true
+  vm_agent_platform_updates_enabled = true
+  network_interface_ids             = [azurerm_network_interface.this.id]
+  zone                              = var.zone
 
   # Imagen desde SIG/Managed Image o Marketplace
   source_image_id = local.use_custom_id ? var.source_image_id : null
