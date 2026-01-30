@@ -1,3 +1,5 @@
+# Test: Verificación de pipeline - 2026-01-30
+
 module "rg-scxpeicmprd" {
   source = "./modules/resource_group"
   resource_group_name = "rg-scxpeicmprd"
