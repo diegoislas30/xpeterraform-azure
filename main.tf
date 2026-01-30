@@ -368,7 +368,6 @@ module "vmscxpevaqa01" {
   os_disk_size_gb     = 128
   security_type       = "Standard"
   disable_password_authentication = false
-  encryption_at_host_enabled      = true
 
   data_disks = [
     {
@@ -469,7 +468,6 @@ module "vmscxpevaprd01" {
   os_disk_size_gb     = 128
   security_type       = "Standard"
   disable_password_authentication = false
-  encryption_at_host_enabled      = true
 
   data_disks = [
     {
