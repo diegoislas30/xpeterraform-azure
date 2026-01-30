@@ -374,7 +374,7 @@ module "vmscxpevaqa01" {
       lun                  = 0
       size_gb              = 100
       caching              = "ReadWrite"
-      storage_account_type = "Premium_LRS"
+      storage_account_type = "StandardSSD_LRS"
     }
   ]
 
@@ -474,7 +474,7 @@ module "vmscxpevaprd01" {
       lun                  = 0
       size_gb              = 100
       caching              = "ReadWrite"
-      storage_account_type = "Premium_LRS"
+      storage_account_type = "StandardSSD_LRS"
     }
   ]
 
