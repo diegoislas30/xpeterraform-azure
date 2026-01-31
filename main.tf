@@ -299,10 +299,10 @@ resource "azurerm_subnet_network_security_group_association" "sailpoint-prd" {
 # VMs SailPoint QA - Windows Server 2022 desde Shared Image Gallery
 # =============================================================================
 
-module "vmscxpeazureqa01" {
+module "vmscxpeazqa01" {
   source              = "./modules/virtual_machine"
-  vm_name             = "vmscxpeazureqa01"
-  computer_name       = "vmscazureqa01"
+  vm_name             = "vmscxpeazqa01"
+  computer_name       = "vmscxpeazqa01"
   resource_group_name = module.rg-scxpesailpointqa.resource_group_name
   location            = module.rg-scxpesailpointqa.resource_group_location
   subnet_id           = module.vnet-xpeperfiles-sailtpointqa.subnet_ids["snet-xpeperfiles-sailtpointqa"]
@@ -314,6 +314,8 @@ module "vmscxpeazureqa01" {
   os_disk_size_gb     = 128
   security_type       = "Standard"
   disable_password_authentication = false
+  private_ip_allocation = "Static"
+  private_ip_address    = "172.29.67.100"
 
   tags = {
     UDN      = "Xpertal"
@@ -328,10 +330,10 @@ module "vmscxpeazureqa01" {
   }
 }
 
-module "vmscxpeiqserviceqa01" {
+module "vmxpeiqsrvqa01" {
   source              = "./modules/virtual_machine"
-  vm_name             = "vmscxpeiqserviceqa01"
-  computer_name       = "vmsciqsvcqa01"
+  vm_name             = "vmxpeiqsrvqa01"
+  computer_name       = "vmxpeiqsrvqa01"
   resource_group_name = module.rg-scxpesailpointqa.resource_group_name
   location            = module.rg-scxpesailpointqa.resource_group_location
   subnet_id           = module.vnet-xpeperfiles-sailtpointqa.subnet_ids["snet-xpeperfiles-sailtpointqa"]
@@ -343,6 +345,8 @@ module "vmscxpeiqserviceqa01" {
   os_disk_size_gb     = 128
   security_type       = "Standard"
   disable_password_authentication = false
+  private_ip_allocation = "Static"
+  private_ip_address    = "172.29.67.102"
 
   tags = {
     UDN      = "Xpertal"
@@ -360,7 +364,7 @@ module "vmscxpeiqserviceqa01" {
 module "vmscxpevaqa01" {
   source              = "./modules/virtual_machine"
   vm_name             = "vmscxpevaqa01"
-  computer_name       = "vmscvaqa01"
+  computer_name       = "vmscxpevaqa01"
   resource_group_name = module.rg-scxpesailpointqa.resource_group_name
   location            = module.rg-scxpesailpointqa.resource_group_location
   subnet_id           = module.vnet-xpeperfiles-sailtpointqa.subnet_ids["snet-xpeperfiles-sailtpointqa"]
@@ -372,6 +376,8 @@ module "vmscxpevaqa01" {
   os_disk_size_gb     = 128
   security_type       = "Standard"
   disable_password_authentication = false
+  private_ip_allocation = "Static"
+  private_ip_address    = "172.29.67.101"
 
   data_disks = [
     {
@@ -399,10 +405,10 @@ module "vmscxpevaqa01" {
 # VMs SailPoint PRD - Windows Server 2022 desde Shared Image Gallery
 # =============================================================================
 
-module "vmscxpeazureprd01" {
+module "vmscxpeazprd01" {
   source              = "./modules/virtual_machine"
-  vm_name             = "vmscxpeazureprd01"
-  computer_name       = "vmscazureprd01"
+  vm_name             = "vmscxpeazprd01"
+  computer_name       = "vmscxpeazprd01"
   resource_group_name = module.rg-scxpesailpointprd.resource_group_name
   location            = module.rg-scxpesailpointprd.resource_group_location
   subnet_id           = module.vnet-xpeperfiles-sailtpointprd.subnet_ids["snet-xpeperfiles-sailtpointprd"]
@@ -414,6 +420,8 @@ module "vmscxpeazureprd01" {
   os_disk_size_gb     = 128
   security_type       = "Standard"
   disable_password_authentication = false
+  private_ip_allocation = "Static"
+  private_ip_address    = "172.29.67.133"
 
   tags = {
     UDN      = "Xpertal"
@@ -428,10 +436,10 @@ module "vmscxpeazureprd01" {
   }
 }
 
-module "vmscxpeiqserviceprd01" {
+module "vmxpeiqsrvprd01" {
   source              = "./modules/virtual_machine"
-  vm_name             = "vmscxpeiqserviceprd01"
-  computer_name       = "vmsciqsvcprd01"
+  vm_name             = "vmxpeiqsrvprd01"
+  computer_name       = "vmxpeiqsrvprd01"
   resource_group_name = module.rg-scxpesailpointprd.resource_group_name
   location            = module.rg-scxpesailpointprd.resource_group_location
   subnet_id           = module.vnet-xpeperfiles-sailtpointprd.subnet_ids["snet-xpeperfiles-sailtpointprd"]
@@ -443,6 +451,8 @@ module "vmscxpeiqserviceprd01" {
   os_disk_size_gb     = 250
   security_type       = "Standard"
   disable_password_authentication = false
+  private_ip_allocation = "Static"
+  private_ip_address    = "172.29.67.132"
 
   tags = {
     UDN      = "Xpertal"
@@ -460,7 +470,7 @@ module "vmscxpeiqserviceprd01" {
 module "vmscxpevaprd01" {
   source              = "./modules/virtual_machine"
   vm_name             = "vmscxpevaprd01"
-  computer_name       = "vmscvaprd01"
+  computer_name       = "vmscxpevaprd01"
   resource_group_name = module.rg-scxpesailpointprd.resource_group_name
   location            = module.rg-scxpesailpointprd.resource_group_location
   subnet_id           = module.vnet-xpeperfiles-sailtpointprd.subnet_ids["snet-xpeperfiles-sailtpointprd"]
@@ -472,6 +482,8 @@ module "vmscxpevaprd01" {
   os_disk_size_gb     = 128
   security_type       = "Standard"
   disable_password_authentication = false
+  private_ip_allocation = "Static"
+  private_ip_address    = "172.29.67.134"
 
   data_disks = [
     {
@@ -581,19 +593,19 @@ resource "azurerm_backup_policy_vm" "sailpoint-prd" {
 # Backup Protection - VMs QA
 # =============================================================================
 
-resource "azurerm_backup_protected_vm" "vmscxpeazureqa01" {
+resource "azurerm_backup_protected_vm" "vmscxpeazqa01" {
   resource_group_name = module.rg-scxpesailpointqa.resource_group_name
   recovery_vault_name = azurerm_recovery_services_vault.sailpoint-qa.name
-  source_vm_id        = module.vmscxpeazureqa01.vm_id
+  source_vm_id        = module.vmscxpeazqa01.vm_id
   backup_policy_id    = azurerm_backup_policy_vm.sailpoint-qa.id
 
   provider = azurerm.xpeperfiles-xcs
 }
 
-resource "azurerm_backup_protected_vm" "vmscxpeiqserviceqa01" {
+resource "azurerm_backup_protected_vm" "vmxpeiqsrvqa01" {
   resource_group_name = module.rg-scxpesailpointqa.resource_group_name
   recovery_vault_name = azurerm_recovery_services_vault.sailpoint-qa.name
-  source_vm_id        = module.vmscxpeiqserviceqa01.vm_id
+  source_vm_id        = module.vmxpeiqsrvqa01.vm_id
   backup_policy_id    = azurerm_backup_policy_vm.sailpoint-qa.id
 
   provider = azurerm.xpeperfiles-xcs
@@ -612,19 +624,19 @@ resource "azurerm_backup_protected_vm" "vmscxpevaqa01" {
 # Backup Protection - VMs PRD
 # =============================================================================
 
-resource "azurerm_backup_protected_vm" "vmscxpeazureprd01" {
+resource "azurerm_backup_protected_vm" "vmscxpeazprd01" {
   resource_group_name = module.rg-scxpesailpointprd.resource_group_name
   recovery_vault_name = azurerm_recovery_services_vault.sailpoint-prd.name
-  source_vm_id        = module.vmscxpeazureprd01.vm_id
+  source_vm_id        = module.vmscxpeazprd01.vm_id
   backup_policy_id    = azurerm_backup_policy_vm.sailpoint-prd.id
 
   provider = azurerm.xpeperfiles-xcs
 }
 
-resource "azurerm_backup_protected_vm" "vmscxpeiqserviceprd01" {
+resource "azurerm_backup_protected_vm" "vmxpeiqsrvprd01" {
   resource_group_name = module.rg-scxpesailpointprd.resource_group_name
   recovery_vault_name = azurerm_recovery_services_vault.sailpoint-prd.name
-  source_vm_id        = module.vmscxpeiqserviceprd01.vm_id
+  source_vm_id        = module.vmxpeiqsrvprd01.vm_id
   backup_policy_id    = azurerm_backup_policy_vm.sailpoint-prd.id
 
   provider = azurerm.xpeperfiles-xcs
