@@ -317,6 +317,15 @@ module "vmscxpeazqa01" {
   private_ip_allocation = "Static"
   private_ip_address    = "172.29.67.100"
 
+  data_disks = [
+    {
+      lun                  = 0
+      size_gb              = 50
+      caching              = "ReadWrite"
+      storage_account_type = "StandardSSD_LRS"
+    }
+  ]
+
   tags = {
     UDN      = "Xpertal"
     OWNER    = "Felipe Alvarado"
@@ -422,6 +431,15 @@ module "vmscxpeazprd01" {
   disable_password_authentication = false
   private_ip_allocation = "Static"
   private_ip_address    = "172.29.67.133"
+
+  data_disks = [
+    {
+      lun                  = 0
+      size_gb              = 50
+      caching              = "ReadWrite"
+      storage_account_type = "StandardSSD_LRS"
+    }
+  ]
 
   tags = {
     UDN      = "Xpertal"
