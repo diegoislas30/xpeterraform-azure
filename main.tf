@@ -1,4 +1,4 @@
-# Test: Verificación de pipeline - 2026-01-30
+# Retry: Create remaining 4 VMs after NIC cleanup - 2026-01-31
 
 module "rg-scxpeicmprd" {
   source = "./modules/resource_group"
