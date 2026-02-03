@@ -320,7 +320,7 @@ module "vmscxpeazqa01" {
   data_disks = [
     {
       lun                  = 0
-      size_gb              = 50
+      size_gb              = 55
       caching              = "ReadWrite"
       storage_account_type = "StandardSSD_LRS"
     }
@@ -435,7 +435,7 @@ module "vmscxpeazprd01" {
   data_disks = [
     {
       lun                  = 0
-      size_gb              = 50
+      size_gb              = 55
       caching              = "ReadWrite"
       storage_account_type = "StandardSSD_LRS"
     }
