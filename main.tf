@@ -1,4 +1,4 @@
-# Retry: Create remaining 4 VMs after NIC cleanup - 2026-01-31
+# Trigger: Disk size updated to 55GB for vmscxpeazureqa01 and vmscxpeazureprd01 - 2026-02-03
 
 module "rg-scxpeicmprd" {
   source = "./modules/resource_group"
