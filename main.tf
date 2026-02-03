@@ -1,4 +1,4 @@
-# Trigger: Added 15GB disk for vmxpeiqsrvqa01 (172.29.67.102) - 2026-02-03
+# Trigger v2: Added 15GB disk for vmxpeiqsrvqa01 (172.29.67.102) - 2026-02-03
 
 module "rg-scxpeicmprd" {
   source = "./modules/resource_group"
