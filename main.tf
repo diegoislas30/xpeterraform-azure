@@ -357,6 +357,15 @@ module "vmxpeiqsrvqa01" {
   private_ip_allocation = "Static"
   private_ip_address    = "172.29.67.102"
 
+  data_disks = [
+    {
+      lun                  = 0
+      size_gb              = 15
+      caching              = "ReadWrite"
+      storage_account_type = "StandardSSD_LRS"
+    }
+  ]
+
   tags = {
     UDN      = "Xpertal"
     OWNER    = "Felipe Alvarado"
