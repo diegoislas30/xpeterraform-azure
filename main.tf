@@ -327,6 +327,168 @@ resource "azurerm_storage_container" "sailpoint-vhds" {
 }
 
 # =============================================================================
+# Imagen de SailPoint VA desde VHD
+# =============================================================================
+
+resource "azurerm_image" "sailpoint-va" {
+  name                      = "img-sailpoint-va"
+  resource_group_name       = module.rg-scxpesailpointqa.resource_group_name
+  location                  = module.rg-scxpesailpointqa.resource_group_location
+  hyper_v_generation        = "V1"
+
+  os_disk {
+    os_type  = "Linux"
+    os_state = "Generalized"
+    blob_uri = "https://stxpesailpointvhds.blob.core.windows.net/vhds/sailpoint-va.vhd"
+    size_gb  = 132
+  }
+
+  tags = {
+    UDN      = "Xpertal"
+    OWNER    = "Felipe Alvarado"
+    xpeowner = "felipe.alvarado@xpertal.com"
+    proyecto = "SailPoint"
+    ambiente = "Shared"
+  }
+
+  provider = azurerm.xpeperfiles-xcs
+
+  depends_on = [azurerm_storage_container.sailpoint-vhds]
+}
+
+# =============================================================================
+# VMs SailPoint VA - QA (Linux desde VHD)
+# =============================================================================
+
+module "vmxpevaqa01" {
+  source              = "./modules/virtual_machine"
+  vm_name             = "vmxpevaqa01"
+  computer_name       = "vmxpevaqa01"
+  resource_group_name = module.rg-scxpesailpointqa.resource_group_name
+  location            = module.rg-scxpesailpointqa.resource_group_location
+  subnet_id           = module.vnet-xpeperfiles-sailtpointqa.subnet_ids["snet-xpeperfiles-sailtpointqa"]
+  os_type             = "linux"
+  vm_size             = "Standard_E2s_v5"
+  source_image_id     = azurerm_image.sailpoint-va.id
+  admin_username      = var.admin_username
+  admin_password      = var.admin_password
+  os_disk_size_gb     = 132
+  security_type       = "Standard"
+  disable_password_authentication = false
+  private_ip_allocation = "Static"
+  private_ip_address    = "172.29.67.100"
+
+  tags = {
+    UDN      = "Xpertal"
+    OWNER    = "Felipe Alvarado"
+    xpeowner = "felipe.alvarado@xpertal.com"
+    proyecto = "SailPoint"
+    ambiente = "QA"
+  }
+
+  providers = {
+    azurerm = azurerm.xpeperfiles-xcs
+  }
+}
+
+module "vmxpevaqa02" {
+  source              = "./modules/virtual_machine"
+  vm_name             = "vmxpevaqa02"
+  computer_name       = "vmxpevaqa02"
+  resource_group_name = module.rg-scxpesailpointqa.resource_group_name
+  location            = module.rg-scxpesailpointqa.resource_group_location
+  subnet_id           = module.vnet-xpeperfiles-sailtpointqa.subnet_ids["snet-xpeperfiles-sailtpointqa"]
+  os_type             = "linux"
+  vm_size             = "Standard_E2s_v5"
+  source_image_id     = azurerm_image.sailpoint-va.id
+  admin_username      = var.admin_username
+  admin_password      = var.admin_password
+  os_disk_size_gb     = 132
+  security_type       = "Standard"
+  disable_password_authentication = false
+  private_ip_allocation = "Static"
+  private_ip_address    = "172.29.67.101"
+
+  tags = {
+    UDN      = "Xpertal"
+    OWNER    = "Felipe Alvarado"
+    xpeowner = "felipe.alvarado@xpertal.com"
+    proyecto = "SailPoint"
+    ambiente = "QA"
+  }
+
+  providers = {
+    azurerm = azurerm.xpeperfiles-xcs
+  }
+}
+
+# =============================================================================
+# VMs SailPoint VA - PRD (Linux desde VHD)
+# =============================================================================
+
+module "vmxpevaprd01" {
+  source              = "./modules/virtual_machine"
+  vm_name             = "vmxpevaprd01"
+  computer_name       = "vmxpevaprd01"
+  resource_group_name = module.rg-scxpesailpointprd.resource_group_name
+  location            = module.rg-scxpesailpointprd.resource_group_location
+  subnet_id           = module.vnet-xpeperfiles-sailtpointprd.subnet_ids["snet-xpeperfiles-sailtpointprd"]
+  os_type             = "linux"
+  vm_size             = "Standard_D8s_v5"
+  source_image_id     = azurerm_image.sailpoint-va.id
+  admin_username      = var.admin_username
+  admin_password      = var.admin_password
+  os_disk_size_gb     = 132
+  security_type       = "Standard"
+  disable_password_authentication = false
+  private_ip_allocation = "Static"
+  private_ip_address    = "172.29.67.133"
+
+  tags = {
+    UDN      = "Xpertal"
+    OWNER    = "Felipe Alvarado"
+    xpeowner = "felipe.alvarado@xpertal.com"
+    proyecto = "SailPoint"
+    ambiente = "Productivo"
+  }
+
+  providers = {
+    azurerm = azurerm.xpeperfiles-xcs
+  }
+}
+
+module "vmxpevaprd02" {
+  source              = "./modules/virtual_machine"
+  vm_name             = "vmxpevaprd02"
+  computer_name       = "vmxpevaprd02"
+  resource_group_name = module.rg-scxpesailpointprd.resource_group_name
+  location            = module.rg-scxpesailpointprd.resource_group_location
+  subnet_id           = module.vnet-xpeperfiles-sailtpointprd.subnet_ids["snet-xpeperfiles-sailtpointprd"]
+  os_type             = "linux"
+  vm_size             = "Standard_D8s_v5"
+  source_image_id     = azurerm_image.sailpoint-va.id
+  admin_username      = var.admin_username
+  admin_password      = var.admin_password
+  os_disk_size_gb     = 132
+  security_type       = "Standard"
+  disable_password_authentication = false
+  private_ip_allocation = "Static"
+  private_ip_address    = "172.29.67.134"
+
+  tags = {
+    UDN      = "Xpertal"
+    OWNER    = "Felipe Alvarado"
+    xpeowner = "felipe.alvarado@xpertal.com"
+    proyecto = "SailPoint"
+    ambiente = "Productivo"
+  }
+
+  providers = {
+    azurerm = azurerm.xpeperfiles-xcs
+  }
+}
+
+# =============================================================================
 # VMs SailPoint QA - Windows Server 2022 desde Shared Image Gallery
 # =============================================================================
 
