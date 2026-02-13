@@ -501,7 +501,7 @@ module "vmxpeiqsrvqa01" {
   location            = module.rg-scxpesailpointqa.resource_group_location
   subnet_id           = module.vnet-xpeperfiles-sailtpointqa.subnet_ids["snet-xpeperfiles-sailtpointqa"]
   os_type             = "windows"
-  vm_size             = "Standard_D2_v5"
+  vm_size             = "Standard_D4ls_v5"
   source_image_id     = data.azurerm_shared_image_version.windows2022.id
   admin_username      = var.admin_username
   admin_password      = var.admin_password
@@ -548,7 +548,7 @@ module "vmxpeiqsrvprd01" {
   location            = module.rg-scxpesailpointprd.resource_group_location
   subnet_id           = module.vnet-xpeperfiles-sailtpointprd.subnet_ids["snet-xpeperfiles-sailtpointprd"]
   os_type             = "windows"
-  vm_size             = "Standard_D4d_v5"
+  vm_size             = "Standard_D8lds_v5"
   source_image_id     = data.azurerm_shared_image_version.windows2022.id
   admin_username      = var.admin_username
   admin_password      = var.admin_password
