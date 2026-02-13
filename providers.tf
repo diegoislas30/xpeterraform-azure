@@ -15,9 +15,10 @@ provider "azurerm" {
 # =============================================================================
 
 provider "azurerm" {
-  alias           = "cscp_xcs"
+  alias                          = "cscp_xcs"
   features {}
-  subscription_id = "ca6c31c5-9ab0-40d6-b9ec-5ac94ed24da2"
+  subscription_id                = "ca6c31c5-9ab0-40d6-b9ec-5ac94ed24da2"
+  resource_provider_registrations = "none"
 }
 
 provider "azurerm" {
