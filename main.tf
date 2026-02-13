@@ -299,45 +299,6 @@ resource "azurerm_subnet_network_security_group_association" "sailpoint-prd" {
 # VMs SailPoint QA - Windows Server 2022 desde Shared Image Gallery
 # =============================================================================
 
-module "vmscxpeazqa01" {
-  source              = "./modules/virtual_machine"
-  vm_name             = "vmscxpeazqa01"
-  computer_name       = "vmscxpeazqa01"
-  resource_group_name = module.rg-scxpesailpointqa.resource_group_name
-  location            = module.rg-scxpesailpointqa.resource_group_location
-  subnet_id           = module.vnet-xpeperfiles-sailtpointqa.subnet_ids["snet-xpeperfiles-sailtpointqa"]
-  os_type             = "windows"
-  vm_size             = "Standard_D8s_v5"
-  source_image_id     = data.azurerm_shared_image_version.windows2022.id
-  admin_username      = var.admin_username
-  admin_password      = var.admin_password
-  os_disk_size_gb     = 128
-  security_type       = "Standard"
-  disable_password_authentication = false
-  private_ip_allocation = "Static"
-  private_ip_address    = "172.29.67.100"
-
-  data_disks = [
-    {
-      lun                  = 0
-      size_gb              = 55
-      caching              = "ReadWrite"
-      storage_account_type = "StandardSSD_LRS"
-    }
-  ]
-
-  tags = {
-    UDN      = "Xpertal"
-    OWNER    = "Felipe Alvarado"
-    xpeowner = "felipe.alvarado@xpertal.com"
-    proyecto = "SailPoint"
-    ambiente = "QA"
-  }
-
-  providers = {
-    azurerm = azurerm.xpeperfiles-xcs
-  }
-}
 
 module "vmxpeiqsrvqa01" {
   source              = "./modules/virtual_machine"
@@ -379,89 +340,12 @@ module "vmxpeiqsrvqa01" {
   }
 }
 
-module "vmscxpevaqa01" {
-  source              = "./modules/virtual_machine"
-  vm_name             = "vmscxpevaqa01"
-  computer_name       = "vmscxpevaqa01"
-  resource_group_name = module.rg-scxpesailpointqa.resource_group_name
-  location            = module.rg-scxpesailpointqa.resource_group_location
-  subnet_id           = module.vnet-xpeperfiles-sailtpointqa.subnet_ids["snet-xpeperfiles-sailtpointqa"]
-  os_type             = "windows"
-  vm_size             = "Standard_D8s_v5"
-  source_image_id     = data.azurerm_shared_image_version.windows2022.id
-  admin_username      = var.admin_username
-  admin_password      = var.admin_password
-  os_disk_size_gb     = 128
-  security_type       = "Standard"
-  disable_password_authentication = false
-  private_ip_allocation = "Static"
-  private_ip_address    = "172.29.67.101"
 
-  data_disks = [
-    {
-      lun                  = 0
-      size_gb              = 100
-      caching              = "ReadWrite"
-      storage_account_type = "StandardSSD_LRS"
-    }
-  ]
-
-  tags = {
-    UDN      = "Xpertal"
-    OWNER    = "Felipe Alvarado"
-    xpeowner = "felipe.alvarado@xpertal.com"
-    proyecto = "SailPoint"
-    ambiente = "QA"
-  }
-
-  providers = {
-    azurerm = azurerm.xpeperfiles-xcs
-  }
-}
 
 # =============================================================================
 # VMs SailPoint PRD - Windows Server 2022 desde Shared Image Gallery
 # =============================================================================
 
-module "vmscxpeazprd01" {
-  source              = "./modules/virtual_machine"
-  vm_name             = "vmscxpeazprd01"
-  computer_name       = "vmscxpeazprd01"
-  resource_group_name = module.rg-scxpesailpointprd.resource_group_name
-  location            = module.rg-scxpesailpointprd.resource_group_location
-  subnet_id           = module.vnet-xpeperfiles-sailtpointprd.subnet_ids["snet-xpeperfiles-sailtpointprd"]
-  os_type             = "windows"
-  vm_size             = "Standard_D8s_v5"
-  source_image_id     = data.azurerm_shared_image_version.windows2022.id
-  admin_username      = var.admin_username
-  admin_password      = var.admin_password
-  os_disk_size_gb     = 128
-  security_type       = "Standard"
-  disable_password_authentication = false
-  private_ip_allocation = "Static"
-  private_ip_address    = "172.29.67.133"
-
-  data_disks = [
-    {
-      lun                  = 0
-      size_gb              = 55
-      caching              = "ReadWrite"
-      storage_account_type = "StandardSSD_LRS"
-    }
-  ]
-
-  tags = {
-    UDN      = "Xpertal"
-    OWNER    = "Felipe Alvarado"
-    xpeowner = "felipe.alvarado@xpertal.com"
-    proyecto = "SailPoint"
-    ambiente = "Productivo"
-  }
-
-  providers = {
-    azurerm = azurerm.xpeperfiles-xcs
-  }
-}
 
 module "vmxpeiqsrvprd01" {
   source              = "./modules/virtual_machine"
@@ -494,45 +378,7 @@ module "vmxpeiqsrvprd01" {
   }
 }
 
-module "vmscxpevaprd01" {
-  source              = "./modules/virtual_machine"
-  vm_name             = "vmscxpevaprd01"
-  computer_name       = "vmscxpevaprd01"
-  resource_group_name = module.rg-scxpesailpointprd.resource_group_name
-  location            = module.rg-scxpesailpointprd.resource_group_location
-  subnet_id           = module.vnet-xpeperfiles-sailtpointprd.subnet_ids["snet-xpeperfiles-sailtpointprd"]
-  os_type             = "windows"
-  vm_size             = "Standard_D8s_v5"
-  source_image_id     = data.azurerm_shared_image_version.windows2022.id
-  admin_username      = var.admin_username
-  admin_password      = var.admin_password
-  os_disk_size_gb     = 128
-  security_type       = "Standard"
-  disable_password_authentication = false
-  private_ip_allocation = "Static"
-  private_ip_address    = "172.29.67.134"
 
-  data_disks = [
-    {
-      lun                  = 0
-      size_gb              = 100
-      caching              = "ReadWrite"
-      storage_account_type = "StandardSSD_LRS"
-    }
-  ]
-
-  tags = {
-    UDN      = "Xpertal"
-    OWNER    = "Felipe Alvarado"
-    xpeowner = "felipe.alvarado@xpertal.com"
-    proyecto = "SailPoint"
-    ambiente = "Productivo"
-  }
-
-  providers = {
-    azurerm = azurerm.xpeperfiles-xcs
-  }
-}
 
 # =============================================================================
 # Azure Backup - Recovery Services Vaults y Políticas
