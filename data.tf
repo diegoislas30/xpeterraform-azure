@@ -34,3 +34,9 @@ data "azurerm_route_table" "rt-er2poc-test" {
   resource_group_name = "rg-xpeseg-test"
   provider            = azurerm.xpertal_shared_xcs
 }
+
+# Resource Group SCARM SIESP PRD - Suscripción CSCP-XCS
+data "azurerm_resource_group" "rg-scarmsiespprd" {
+  name     = "rg-scarmsiespprd"
+  provider = azurerm.cscp_xcs
+}

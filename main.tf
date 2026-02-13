@@ -971,4 +971,42 @@ resource "azurerm_route" "rt2LANCloud47" {
 # =============================================================================
 
 # =============================================================================
+# Application Insights - SCARM SIESP PRD (Suscripción CSCP-XCS)
+# =============================================================================
+
+# Log Analytics Workspace requerido para Application Insights (workspace-based)
+resource "azurerm_log_analytics_workspace" "log-scarmsiespprd" {
+  name                = "log-scarmsiespprd"
+  location            = data.azurerm_resource_group.rg-scarmsiespprd.location
+  resource_group_name = data.azurerm_resource_group.rg-scarmsiespprd.name
+  sku                 = "PerGB2018"
+  retention_in_days   = 30
+
+  tags = {
+    OWNER    = "Ricardo Villagran"
+    UDN      = "ARMUR"
+    xpeowner = "ricardo.villagran@xpertal.com"
+  }
+
+  provider = azurerm.cscp_xcs
+}
+
+# Application Insights
+resource "azurerm_application_insights" "appi-scarmsiespprd" {
+  name                = "appi-scarmsiespprd"
+  location            = data.azurerm_resource_group.rg-scarmsiespprd.location
+  resource_group_name = data.azurerm_resource_group.rg-scarmsiespprd.name
+  workspace_id        = azurerm_log_analytics_workspace.log-scarmsiespprd.id
+  application_type    = "other"
+
+  tags = {
+    OWNER    = "Ricardo Villagran"
+    UDN      = "ARMUR"
+    xpeowner = "ricardo.villagran@xpertal.com"
+  }
+
+  provider = azurerm.cscp_xcs
+}
+
+# =============================================================================
 
