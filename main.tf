@@ -379,7 +379,6 @@ module "vmxpeiqsrvprd01" {
 }
 
 
-
 # =============================================================================
 # Azure Backup - Recovery Services Vaults y Políticas
 # =============================================================================
@@ -466,14 +465,7 @@ resource "azurerm_backup_policy_vm" "sailpoint-prd" {
 # Backup Protection - VMs QA
 # =============================================================================
 
-resource "azurerm_backup_protected_vm" "vmscxpeazqa01" {
-  resource_group_name = module.rg-scxpesailpointqa.resource_group_name
-  recovery_vault_name = azurerm_recovery_services_vault.sailpoint-qa.name
-  source_vm_id        = module.vmscxpeazqa01.vm_id
-  backup_policy_id    = azurerm_backup_policy_vm.sailpoint-qa.id
 
-  provider = azurerm.xpeperfiles-xcs
-}
 
 resource "azurerm_backup_protected_vm" "vmxpeiqsrvqa01" {
   resource_group_name = module.rg-scxpesailpointqa.resource_group_name
@@ -484,41 +476,16 @@ resource "azurerm_backup_protected_vm" "vmxpeiqsrvqa01" {
   provider = azurerm.xpeperfiles-xcs
 }
 
-resource "azurerm_backup_protected_vm" "vmscxpevaqa01" {
-  resource_group_name = module.rg-scxpesailpointqa.resource_group_name
-  recovery_vault_name = azurerm_recovery_services_vault.sailpoint-qa.name
-  source_vm_id        = module.vmscxpevaqa01.vm_id
-  backup_policy_id    = azurerm_backup_policy_vm.sailpoint-qa.id
 
-  provider = azurerm.xpeperfiles-xcs
-}
 
 # =============================================================================
 # Backup Protection - VMs PRD
 # =============================================================================
 
-resource "azurerm_backup_protected_vm" "vmscxpeazprd01" {
-  resource_group_name = module.rg-scxpesailpointprd.resource_group_name
-  recovery_vault_name = azurerm_recovery_services_vault.sailpoint-prd.name
-  source_vm_id        = module.vmscxpeazprd01.vm_id
-  backup_policy_id    = azurerm_backup_policy_vm.sailpoint-prd.id
-
-  provider = azurerm.xpeperfiles-xcs
-}
-
 resource "azurerm_backup_protected_vm" "vmxpeiqsrvprd01" {
   resource_group_name = module.rg-scxpesailpointprd.resource_group_name
   recovery_vault_name = azurerm_recovery_services_vault.sailpoint-prd.name
   source_vm_id        = module.vmxpeiqsrvprd01.vm_id
-  backup_policy_id    = azurerm_backup_policy_vm.sailpoint-prd.id
-
-  provider = azurerm.xpeperfiles-xcs
-}
-
-resource "azurerm_backup_protected_vm" "vmscxpevaprd01" {
-  resource_group_name = module.rg-scxpesailpointprd.resource_group_name
-  recovery_vault_name = azurerm_recovery_services_vault.sailpoint-prd.name
-  source_vm_id        = module.vmscxpevaprd01.vm_id
   backup_policy_id    = azurerm_backup_policy_vm.sailpoint-prd.id
 
   provider = azurerm.xpeperfiles-xcs
