@@ -296,6 +296,37 @@ resource "azurerm_subnet_network_security_group_association" "sailpoint-prd" {
 }
 
 # =============================================================================
+# Storage Account para VHD de SailPoint VA
+# =============================================================================
+
+resource "azurerm_storage_account" "sailpoint-vhd" {
+  name                     = "stxpesailpointvhds"
+  resource_group_name      = module.rg-scxpesailpointqa.resource_group_name
+  location                 = module.rg-scxpesailpointqa.resource_group_location
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
+  account_kind             = "StorageV2"
+
+  tags = {
+    UDN      = "Xpertal"
+    OWNER    = "Felipe Alvarado"
+    xpeowner = "felipe.alvarado@xpertal.com"
+    proyecto = "SailPoint"
+    ambiente = "QA"
+  }
+
+  provider = azurerm.xpeperfiles-xcs
+}
+
+resource "azurerm_storage_container" "sailpoint-vhds" {
+  name                  = "vhds"
+  storage_account_name  = azurerm_storage_account.sailpoint-vhd.name
+  container_access_type = "private"
+
+  provider = azurerm.xpeperfiles-xcs
+}
+
+# =============================================================================
 # VMs SailPoint QA - Windows Server 2022 desde Shared Image Gallery
 # =============================================================================
 
